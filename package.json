@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env main.js",
     "generate": "node --env-file-if-exists=.env generate.js",
-    "list": "node --env-file-if-exists=.env generate.js --list"
+    "list": "node --env-file-if-exists=.env generate.js --list",
+    "studio": "node --env-file-if-exists=.env studio.js"
   },
   "dependencies": {
     "playwright": "^1.56.1"
