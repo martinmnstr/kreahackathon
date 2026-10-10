@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { US_STATES, targetedHeadline } from "@/lib/recall-parse";
 import { FORMAT_SIZE, downloadBlob, renderCardPng, renderCardToCanvas, renderClip, type CardFormat, type CardRecall } from "@/lib/card-render";
 import { Button } from "@/components/ui/button";
+import { RecallRadarCards } from "@/components/recall-radar-cards";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -104,6 +105,7 @@ function Studio() {
             style={{ width: format === "tiktok" ? 360 : 440, aspectRatio: `${FORMAT_SIZE[format].w}/${FORMAT_SIZE[format].h}` }}
           />
         </div>
+        <RecallRadarCards recallId={recall.id} />
       </div>
       <aside className="space-y-5">
         <div>
