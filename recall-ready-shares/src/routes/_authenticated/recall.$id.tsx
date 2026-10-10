@@ -148,7 +148,7 @@ function Studio() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-6 h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
           {[
-            { value: "card", icon: <ImageIcon className="h-4 w-4" />, label: "Single card", hint: "1 card · 7s clip" },
+            { value: "card", icon: <ImageIcon className="h-4 w-4" />, label: "Single card" },
             { value: "pack", icon: <LayoutGrid className="h-4 w-4" />, label: "Carousel", hint: pack ? "4 cards ready" : "not generated", disabled: !pack },
             { value: "video", icon: <Clapperboard className="h-4 w-4" />, label: "Clip", hint: "4 formats" },
           ].map((t) => (
@@ -158,7 +158,7 @@ function Studio() {
               disabled={t.disabled}
               className="gap-2 rounded-md border-2 border-ink bg-card px-4 py-2 text-ink data-[state=active]:bg-ink data-[state=active]:text-paper data-[state=active]:shadow-none"
             >
-              {t.icon}<span className="font-semibold">{t.label}</span><span className="font-mono text-[11px] opacity-70">{t.hint}</span>
+              {t.icon}<span className="font-semibold">{t.label}</span>{t.hint && <span className="font-mono text-[11px] opacity-70">{t.hint}</span>}
             </TabsTrigger>
           ))}
         </TabsList>
