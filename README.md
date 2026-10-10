@@ -20,6 +20,30 @@ cd recall-ready-shares && npm install && npm run dev -- --port 8080   # → http
 
 Point it elsewhere with `VITE_API_URL`. The RecallEvent → UI row mapping is `recall-ready-shares/src/lib/api.ts`.
 
+Each recall page has three outputs: **Single card** (drawn in the browser), **Carousel** (4 crisis cards)
+and **Clip** (AI short video). Carousel and Clip come from `media/` below.
+
+## Media: carousel cards + AI clips
+
+Needs `KREA_API_KEY` (and `CALA_API_KEY` for the statement card) in `.env`, ffmpeg, and Chrome (Playwright).
+
+```bash
+npm install
+npm run cards -- --event 99853   # FDA event → Cala → Krea → out/99853/card1..4.png
+npm run cards:export             # copy every out/<event> pack into recall-ready-shares/public/recall-radar
+npm run video                    # clip service on http://localhost:4300 (the Clip tab calls it)
+```
+
+Clip formats (`media/lib/formats.js`): **Newsroom** (AI anchor + graphic panel), **Countdown** (creator +
+product shots, up to 4 recalls), **Receipts** (talking head + FDA record), **Mascot Explainer** (illustrated
+character). Narration is Krea's ElevenLabs TTS, the presenter is lip-synced with Seedance, and ffmpeg
+composites the 1080×1920 video. Krea results are cached in `out/.cache/krea`, so re-rendering is fast and free.
+Presenter formats take ~3–4 min the first time, Mascot ~1.5 min. Every clip is labeled AI-generated.
+
+| Card pack | |
+|---|---|
+| <img src="docs/cards/card1-alert.jpg" width="160"/> <img src="docs/cards/card2-kitchen.jpg" width="160"/> <img src="docs/cards/card3-steps.jpg" width="160"/> <img src="docs/cards/card4-statement.jpg" width="160"/> | Pipeline walkthrough: `docs/pipeline/index.html` |
+
 ## API
 
 | Endpoint | Returns |

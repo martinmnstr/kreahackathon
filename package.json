@@ -9,7 +9,10 @@
     "start": "node --env-file-if-exists=.env src/server.js",
     "refresh": "node --env-file-if-exists=.env scripts/refresh.js",
     "cala": "node --env-file-if-exists=.env scripts/cala.js",
-    "video": "node --env-file-if-exists=.env video/studio.js"
+    "video": "node --env-file-if-exists=.env media/studio.js",
+    "cards": "node --env-file-if-exists=.env media/generate.js",
+    "cards:list": "node --env-file-if-exists=.env media/generate.js --list",
+    "cards:export": "node media/export-pack.js recall-ready-shares"
   },
   "dependencies": {
     "playwright": "^1.56.1"

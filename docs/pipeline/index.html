@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recall Radar Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one 16:9 broadcast stage (pipeline graph + network log + output folder), transport controls below. Committed dark look, single theme. */
+:root {
+  color-scheme: dark;
+  --ink: #090d12;
+  --stage: #0d131a;
+  --panel: #121a23;
+  --line: #22303f;
+  --fg: #e7edf3;
+  --muted: #8293a6;
+  --fda: #5ba8ff;
+  --cala: #33d39e;
+  --krea: #c48cff;
+  --local: #e7edf3;
+  --alert: #ff3b30;
+  --code: #ffe14d;
+  --f-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { background: var(--ink); color: var(--fg); font-family: var(--f-display); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 18px; }
+
+.intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+.intro h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); font-weight: 850; font-stretch: 118%; letter-spacing: -0.01em; line-height: 1; text-wrap: balance; }
+.intro h1 span { color: var(--alert); }
+.intro p { margin: 0; color: var(--muted); font-size: 15px; max-width: 56ch; line-height: 1.45; }
+
+/* ---------- stage ---------- */
+.viewport { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; background: var(--stage); border: 1px solid var(--line); }
+.stage { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
+.stage * { font-variant-numeric: tabular-nums; }
+
+.hdr { position: absolute; left: 24px; right: 24px; top: 0; height: 56px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid var(--line); }
+.mark { font-weight: 900; font-stretch: 125%; font-size: 17px; letter-spacing: 0.06em; display: flex; align-items: center; gap: 10px; }
+.mark i { width: 12px; height: 12px; border-radius: 50%; background: var(--alert); box-shadow: 0 0 0 4px color-mix(in srgb, var(--alert) 25%, transparent); }
+.evchip { font-family: var(--f-mono); font-size: 12px; color: var(--muted); padding: 4px 9px; border: 1px solid var(--line); border-radius: 4px; white-space: nowrap; }
+.evchip b { color: var(--fg); font-weight: 500; }
+.pills { margin-left: auto; display: flex; gap: 8px; }
+.pill { --c: var(--line); display: flex; align-items: center; gap: 8px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; font-weight: 700; font-stretch: 110%; color: var(--muted); transition: color .25s, border-color .25s, box-shadow .25s; }
+.pill .lamp { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: background .25s; }
+.pill small { font-family: var(--f-mono); font-weight: 400; font-size: 11px; color: var(--muted); }
+.pill[data-svc="fda"] { --c: var(--fda); } .pill[data-svc="cala"] { --c: var(--cala); } .pill[data-svc="krea"] { --c: var(--krea); }
+.pill[data-state="active"] { color: var(--fg); border-color: var(--c); box-shadow: 0 0 22px -6px var(--c); }
+.pill[data-state="active"] .lamp { background: var(--c); animation: blink .7s steps(2) infinite; }
+.pill[data-state="done"] { color: var(--fg); }
+.pill[data-state="done"] .lamp { background: var(--c); }
+.clock { font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-align: right; line-height: 1.25; min-width: 132px; }
+.clock b { color: var(--fg); font-size: 15px; font-weight: 500; }
+@keyframes blink { 50% { opacity: .25; } }
+
+/* graph */
+svg.wires { position: absolute; inset: 0; width: 1280px; height: 720px; pointer-events: none; }
+.wire { fill: none; stroke: var(--line); stroke-width: 2; }
+.wire.on { stroke: var(--c); stroke-dasharray: 6 6; }
+.wire.done { stroke: color-mix(in srgb, var(--c) 45%, var(--line)); }
+.pkt { fill: var(--c); filter: drop-shadow(0 0 6px var(--c)); }
+
+.node { --c: var(--local); position: absolute; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 11px 13px; display: flex; flex-direction: column; gap: 3px; transition: border-color .25s, box-shadow .25s, opacity .25s; }
+.node.local { background: var(--stage); border-style: dashed; }
+.node[data-svc="fda"] { --c: var(--fda); } .node[data-svc="cala"] { --c: var(--cala); } .node[data-svc="krea"] { --c: var(--krea); }
+.node[data-state="idle"] { opacity: .62; }
+.node[data-state="active"] { border-color: var(--c); border-style: solid; box-shadow: 0 0 0 1px var(--c), 0 0 34px -8px var(--c); }
+.node[data-state="done"] { border-color: color-mix(in srgb, var(--c) 50%, var(--line)); }
+.node .tag { display: flex; align-items: center; justify-content: space-between; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .12em; color: var(--muted); }
+.node .tag .lamp { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.node[data-state="active"] .tag .lamp { background: var(--c); animation: blink .7s steps(2) infinite; }
+.node[data-state="done"] .tag .lamp { background: var(--c); }
+.node h3 { margin: 2px 0 0; font-size: 22px; font-weight: 800; font-stretch: 112%; line-height: 1.05; }
+.node.local h3 { font-size: 18px; }
+.node .host { font-family: var(--f-mono); font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.node .st { font-family: var(--f-mono); font-size: 11.5px; color: var(--fg); margin-top: auto; line-height: 1.35; }
+.node .st em { font-style: normal; color: var(--c); }
+.jobs { display: grid; gap: 6px; margin-top: 6px; }
+.job { display: grid; grid-template-columns: 66px 1fr 34px; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
+.job .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; position: relative; }
+.job .bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--krea); }
+.job .bar.wait i { width: 34%; opacity: .55; }
+.job .ok { text-align: right; color: var(--krea); }
+
+/* network log */
+.log { position: absolute; left: 856px; top: 68px; width: 400px; height: 324px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--panel) 70%, var(--stage)); overflow: hidden; }
+.log .lh { display: flex; justify-content: space-between; padding: 8px 12px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em; color: var(--muted); border-bottom: 1px solid var(--line); }
+.row { --c: var(--local); display: grid; grid-template-columns: 44px minmax(0, 1fr) 108px; align-items: center; gap: 8px; height: 26px; padding-inline: 10px; font-family: var(--f-mono); font-size: 11px; border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+.row[data-svc="fda"] { --c: var(--fda); } .row[data-svc="cala"] { --c: var(--cala); } .row[data-svc="krea"] { --c: var(--krea); }
+.row .m { color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); border-radius: 3px; text-align: center; font-size: 9.5px; font-weight: 600; padding: 1px 0; }
+.row .p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fg); }
+.row .p span { color: var(--muted); }
+.row .s { text-align: right; color: var(--muted); white-space: nowrap; }
+.row.ok .s { color: var(--c); }
+.row.live { background: color-mix(in srgb, var(--c) 9%, transparent); }
+
+/* output folder */
+.trayl { position: absolute; left: 24px; top: 398px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; color: var(--muted); }
+.trayl b { color: var(--fg); font-weight: 500; }
+.slot { position: absolute; top: 440px; width: 200px; height: 200px; border: 1px dashed var(--line); border-radius: 6px; overflow: hidden; background: var(--stage); }
+.slot .prompt { position: absolute; inset: 0; padding: 14px; font-family: var(--f-mono); font-size: 10.5px; line-height: 1.5; color: var(--muted); }
+.slot .prompt b { display: block; color: var(--krea); font-weight: 500; letter-spacing: .08em; font-size: 9.5px; margin-bottom: 6px; }
+.slot .scan { position: absolute; left: 0; right: 0; height: 40%; background: linear-gradient(transparent, color-mix(in srgb, var(--krea) 22%, transparent), transparent); }
+.slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; max-width: 100%; }
+.slot .card { clip-path: inset(0 0 100% 0); }
+.slot .edge { position: absolute; left: 0; right: 0; height: 2px; background: #fff; box-shadow: 0 0 12px 2px #fff; opacity: 0; }
+.slot .ftag { position: absolute; left: 6px; bottom: 6px; max-width: calc(100% - 12px); font-family: var(--f-mono); font-size: 9.5px; padding: 3px 6px; border-radius: 3px; background: rgba(5, 8, 12, .82); color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot .ftag.k { color: var(--krea); }
+
+/* recall object inspector */
+.insp { position: absolute; left: 896px; top: 398px; width: 360px; height: 242px; }
+.insp .ih { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; color: var(--muted); margin-bottom: 14px; }
+.kv { --c: var(--fda); display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; font-family: var(--f-mono); font-size: 11.5px; line-height: 1.4; padding-block: 2.5px; transition: opacity .3s, transform .3s; }
+.kv[data-svc="cala"] { --c: var(--cala); }
+.kv .k { color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.kv .k::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c); flex: none; }
+.kv .v { color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kv .v.wrap { white-space: normal; }
+.kv .v small { display: block; color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kv.hide { opacity: 0; transform: translateX(-6px); }
+.hz { color: var(--alert) !important; }
+
+.sub { position: absolute; left: 24px; right: 24px; top: 656px; height: 46px; display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--line); }
+.sub .chap { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; color: var(--alert); white-space: nowrap; }
+.sub .cap { font-size: 20px; font-weight: 600; font-stretch: 104%; }
+
+/* ---------- controls ---------- */
+.ctl { display: grid; gap: 12px; }
+.bar1 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+button { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 14px; font-weight: 600; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--fda); outline-offset: 2px; }
+#play { min-width: 92px; }
+#scrub { flex: 1 1 260px; min-width: 0; accent-color: var(--alert); }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg button { text-align: left; display: grid; gap: 2px; font-weight: 700; }
+.seg button small { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+.seg button[aria-pressed="true"] { border-color: var(--alert); box-shadow: inset 0 0 0 1px var(--alert); }
+.chaps { display: flex; flex-wrap: wrap; gap: 6px; }
+.chaps button { font-family: var(--f-mono); font-size: 12px; font-weight: 500; padding: 5px 10px; color: var(--muted); }
+.chaps button.cur { color: var(--fg); border-color: var(--alert); }
+.capm { font-size: 16px; line-height: 1.45; color: var(--fg); margin: 0; min-height: 1.45em; }
+
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 10px; }
+.legend div { --c: var(--local); border-top: 2px solid var(--c); padding-top: 10px; min-width: 0; }
+.legend div[data-svc="fda"] { --c: var(--fda); } .legend div[data-svc="cala"] { --c: var(--cala); } .legend div[data-svc="krea"] { --c: var(--krea); }
+.legend div.local { border-top-style: dashed; }
+.legend h4 { margin: 0 0 4px; font-size: 16px; font-weight: 800; font-stretch: 112%; }
+.legend p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.legend code { font-family: var(--f-mono); font-size: 12.5px; color: var(--fg); }
+.note { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; max-width: 80ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pill[data-state="active"] .lamp, .node[data-state="active"] .tag .lamp { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="intro">
+    <h1>Recall Radar<span>.</span></h1>
+    <p>An FDA recall goes in. Four social cards come out. This replay shows each step and lights up every API call to openFDA, Cala and Krea as it happens.</p>
+  </header>
+
+  <div class="viewport" id="vp">
+    <div class="stage" id="stage">
+      <div class="hdr">
+        <div class="mark"><i></i>RECALL RADAR</div>
+        <div class="evchip" id="evchip"></div>
+        <div class="pills">
+          <div class="pill" data-svc="fda"><span class="lamp"></span>openFDA <small data-n></small></div>
+          <div class="pill" data-svc="cala"><span class="lamp"></span>Cala <small data-n></small></div>
+          <div class="pill" data-svc="krea"><span class="lamp"></span>Krea <small data-n></small></div>
+        </div>
+        <div class="clock"><b id="clock">t+0.0s</b><br>replay · time compressed</div>
+      </div>
+
+      <svg class="wires" viewBox="0 0 1280 720" aria-hidden="true">
+        <g id="wires"></g>
+        <g id="pkts"></g>
+      </svg>
+
+      <div class="node" data-svc="fda" id="n-fda" style="left:24px;top:150px;width:164px;height:116px">
+        <div class="tag">EXTERNAL API <span class="lamp"></span></div>
+        <h3>openFDA</h3>
+        <div class="host">api.fda.gov</div>
+        <div class="st" data-st></div>
+      </div>
+      <div class="node local" id="n-norm" style="left:214px;top:168px;width:134px;height:82px">
+        <div class="tag">LOCAL <span class="lamp"></span></div>
+        <h3>Normalize</h3>
+        <div class="host">group · classify</div>
+      </div>
+      <div class="node" data-svc="cala" id="n-cala" style="left:384px;top:72px;width:200px;height:118px">
+        <div class="tag">EXTERNAL API <span class="lamp"></span></div>
+        <h3>Cala</h3>
+        <div class="host">api.cala.ai · entities</div>
+        <div class="st" data-st></div>
+      </div>
+      <div class="node" data-svc="krea" id="n-krea" style="left:384px;top:210px;width:200px;height:176px">
+        <div class="tag">EXTERNAL API <span class="lamp"></span></div>
+        <h3>Krea</h3>
+        <div class="host">krea-2 medium-turbo</div>
+        <div class="jobs" id="jobs"></div>
+      </div>
+      <div class="node local" id="n-copy" style="left:620px;top:86px;width:176px;height:86px">
+        <div class="tag">LOCAL <span class="lamp"></span></div>
+        <h3>Card copy</h3>
+        <div class="host">4 templates · no LLM</div>
+      </div>
+      <div class="node local" id="n-render" style="left:620px;top:236px;width:200px;height:112px">
+        <div class="tag">LOCAL <span class="lamp"></span></div>
+        <h3>Render</h3>
+        <div class="host">Playwright · Chrome</div>
+        <div class="st" data-st></div>
+      </div>
+
+      <div class="log">
+        <div class="lh"><span>NETWORK</span><span>LIVE CALLS</span></div>
+        <div id="rows"></div>
+      </div>
+
+      <div class="trayl" id="trayl"></div>
+      <div id="slots"></div>
+
+      <div class="insp">
+        <div class="ih">RECALL OBJECT</div>
+        <div id="kvs"></div>
+      </div>
+
+      <div class="sub"><span class="chap" id="chap"></span><span class="cap" id="cap"></span></div>
+    </div>
+  </div>
+
+  <div class="ctl">
+    <div class="bar1">
+      <button id="play" type="button">Pause</button>
+      <button id="restart" type="button">Restart</button>
+      <input id="scrub" type="range" min="0" max="26" step="0.01" value="0" aria-label="Replay position">
+    </div>
+    <div class="chaps" id="chaps"></div>
+    <p class="capm" id="capm" aria-live="polite"></p>
+    <div class="seg" id="seg" role="group" aria-label="Recall to replay"></div>
+  </div>
+
+  <section class="legend">
+    <div data-svc="fda"><h4>openFDA</h4><p>One GET for the recall event. All rows that share its <code>event_id</code> are merged into one recall.</p></div>
+    <div data-svc="cala"><h4>Cala</h4><p>Looks up the recalling company. A fuzzy hit only counts if the name truly matches, so “GIAS FOOD” is not mistaken for another firm.</p></div>
+    <div data-svc="krea"><h4>Krea</h4><p>Four image jobs run in parallel: hazard, product, kitchen, statement background. Prompts forbid any text in the image.</p></div>
+    <div class="local"><h4>Local steps</h4><p>Copy is filled from templates, then Chrome lays real HTML text over each image and saves 1080×1080 PNGs.</p></div>
+  </section>
+  <p class="note">This is a replay of two real runs of <code>npm run generate</code>. Recall data, Cala results, Krea images and cards are the actual outputs. Waiting times are compressed: a live run spends most of its time waiting on Krea jobs.</p>
+</div>
+
+<script>
+const EVENTS = {
+  "99853": {
+    id: "99853", recallNo: "H-1396-2026", product: "Lemon Alfredo Fettuccine", firm: "GIAS FOOD INC.",
+    raw: "Lemon Alfredo Fettuccine packed in a yellow plastic sealed bag with pink…",
+    hazard: "Listeria contamination", cls: "Class I · Critical", dist: "Nationwide",
+    qty: "16,002 bags (2,286 cases)", lots: "L6080C SEP 20 2027 · L6079C SEP 19 2027",
+    calaQuery: "gias food", cala: null,
+    prompts: {
+      alert: "extreme macro electron microscope image of rod-shaped listeria bacteria glowing red, pure black background…",
+      kitchen: "studio product photograph of Lemon Alfredo Fettuccine in its retail packaging (a yellow plastic sealed bag with pink and black lettering)…",
+      steps: "calm minimal flat lay of a clean kitchen counter with a refrigerator door slightly open, soft cool blue daylight…",
+      statement: "abstract dark navy textured paper background, subtle fine grain, soft directional light…",
+    },
+    pick: "Listeria · Cala: no match",
+  },
+  "99874": {
+    id: "99874", recallNo: "H-1395-2026", product: "Cabricharme Cheese", firm: "WFM Purchasing, LP",
+    raw: "Fromagerie Coop de Mean Cabricharme and Belgium Cabricharme Shelf life…",
+    hazard: "Undeclared egg allergen", cls: "Class I · Critical", dist: "7 states · CA AZ NJ MA RI CT NY",
+    qty: "21 Wheels", lots: "Shelf life: 30 days, all dates through 10/7/2026",
+    calaQuery: "wfm purchasing", cala: { name: "WFM Purchasing, L.P.", desc: "A subsidiary of Whole Foods Market Inc." },
+    prompts: {
+      alert: "macro close-up of eggs under harsh red rim light, matte black background, dramatic food photography…",
+      kitchen: "studio product photograph of Cabricharme Cheese in its retail packaging, isolated on a seamless pure white background…",
+      steps: "calm minimal flat lay of a clean kitchen counter with a refrigerator door slightly open, soft cool blue daylight…",
+      statement: "abstract dark navy textured paper background, subtle fine grain, soft directional light…",
+    },
+    pick: "Egg allergen · Cala: matched",
+  },
+};
+
+const D = 26;
+const CARDS = [
+  { key: "alert", asset: "alert", file: "card1-alert.png", job: 11.0, shot: 16.2 },
+  { key: "kitchen", asset: "product", file: "card2-kitchen.png", job: 13.8, shot: 17.2 },
+  { key: "steps", asset: "steps", file: "card3-steps.png", job: 10.4, shot: 18.2 },
+  { key: "statement", asset: "statement", file: "card4-statement.png", job: 12.6, shot: 19.2 },
+];
+const SHOT = 0.7, KREA_START = 5, POLL_START = 6;
+const NODES = { fda: [1, 2.8], norm: [3, 4.4], cala: [5, 7.4], krea: [5, 14.2], copy: [8, 9.4], render: [15.4, 20] };
+const CHAPTERS = [
+  [0, "Trigger", "FDA posts a new recall. Nobody on the PR team has seen it yet."],
+  [1, "openFDA", "Pull every row for this recall event from openFDA."],
+  [3, "Normalize", "Merge rows by event_id, cut a short product name, classify the hazard."],
+  [5, "Cala + Krea", "In parallel: Cala looks up the company, Krea starts four image jobs."],
+  [8, "Card copy", "Cala is back, so the card copy fills in while Krea keeps working."],
+  [15.4, "Render", "Chrome lays HTML text over each Krea image and saves a 1080×1080 PNG."],
+  [20.4, "Done", "Four cards are ready to post, with real lot codes and an AI-draft label."],
+];
+
+const $ = (s, r = document) => r.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+const dots = (t) => "·".repeat(1 + (Math.floor(t * 4) % 3));
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+/* ---------- wires ---------- */
+const SLOT_X = [24, 240, 456, 672];
+const WIRES = {
+  w1: { d: "M188 208 L214 208", c: "fda" },
+  w2: { d: "M348 200 C366 200 366 131 384 131", c: "fda" },
+  w3: { d: "M348 218 C366 218 366 298 384 298", c: "fda" },
+  w4: { d: "M584 129 L620 129", c: "cala" },
+  w5: { d: "M708 172 L708 236", c: "local" },
+  w6: { d: "M584 298 C602 298 602 292 620 292", c: "krea" },
+};
+SLOT_X.forEach((x, i) => { WIRES["t" + i] = { d: `M720 348 L720 424 L${x + 100} 424 L${x + 100} 440`, c: "local" }; });
+const colorOf = (c) => `var(--${c})`;
+const wg = $("#wires"), pg = $("#pkts");
+for (const [id, w] of Object.entries(WIRES)) {
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", w.d); p.setAttribute("class", "wire"); p.style.setProperty("--c", colorOf(w.c));
+  wg.appendChild(p); w.el = p; w.len = p.getTotalLength();
+}
+// [wire, start, end]
+const PACKETS = [
+  ["w1", 2.6, 3.0], ["w2", 4.4, 5.0], ["w3", 4.4, 5.0], ["w4", 7.4, 8.0], ["w5", 9.4, 10.0],
+  ...CARDS.map((c) => ["w6", c.job, c.job + 0.6]),
+  ...CARDS.map((c, i) => ["t" + i, c.shot - 0.55, c.shot]),
+];
+const WIRE_LIVE = { w1: [2.6, 3.0], w2: [4.4, 5], w3: [4.4, 5], w4: [7.4, 8], w5: [9.4, 10], w6: [10.4, 14.4] };
+CARDS.forEach((c, i) => { WIRE_LIVE["t" + i] = [c.shot - 0.55, c.shot + SHOT]; });
+const pktEls = PACKETS.map(([w]) => {
+  const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  c.setAttribute("r", "4.5"); c.setAttribute("class", "pkt"); c.style.setProperty("--c", colorOf(WIRES[w].c));
+  pg.appendChild(c); return c;
+});
+
+/* ---------- per-event DOM ---------- */
+let ev, rows, kvs;
+
+function buildRows(e) {
+  const k = "/generate/image/krea/krea-2/medium-turbo";
+  return [
+    { svc: "fda", m: "GET", p: `<span>api.fda.gov</span>/food/enforcement.json?search=event_id:${e.id}`, s: 1.0, e: 2.6, ok: () => "200 · 1 event" },
+    { svc: "cala", m: "GET", p: `<span>api.cala.ai</span>/v1/entities?name=${esc(e.calaQuery)}`, s: 5.0, e: 7.2, ok: () => (e.cala ? "200 · match" : "200 · no match") },
+    ...CARDS.map((c, i) => ({ svc: "krea", m: "POST", p: `<span>api.krea.ai</span>${k} · ${c.asset}`, s: 5.0 + i * 0.15, e: 5.5 + i * 0.15, ok: () => "200 · job_id" })),
+    { svc: "krea", m: "GET", p: `<span>api.krea.ai</span>/jobs/{job_id}`, s: POLL_START, e: 13.8, ok: () => "4 completed", live: () => "every 2s" },
+    { svc: "krea", m: "GET", p: `<span>result.urls[0]</span> → assets/*.png`, s: 10.4, e: 14.2, ok: () => "4 saved", live: (t) => `${CARDS.filter((c) => t >= c.job).length} of 4` },
+    { svc: "local", m: "RUN", p: `chromium.launch({ channel: 'chrome' })`, s: 15.4, e: 15.8, ok: () => "ready" },
+    { svc: "local", m: "PNG", p: `page.screenshot · 1080×1080`, s: 15.9, e: 19.9, ok: () => "4 cards", live: (t) => `${CARDS.filter((c) => t >= c.shot + SHOT).length} of 4` },
+    { svc: "local", m: "FS", p: `out/${e.id}/recall.json`, s: 20.0, e: 20.3, ok: () => "written" },
+  ];
+}
+
+function setEvent(id) {
+  ev = EVENTS[id];
+  $("#evchip").innerHTML = `event <b>${ev.id}</b> · ${esc(ev.recallNo)}`;
+  $("#trayl").innerHTML = `OUTPUT · <b>out/${ev.id}/</b>`;
+
+  rows = buildRows(ev);
+  $("#rows").innerHTML = rows.map((r) => `<div class="row" data-svc="${r.svc}"><span class="m">${r.m}</span><span class="p">${r.p}</span><span class="s"></span></div>`).join("");
+  rows.forEach((r, i) => { r.el = $("#rows").children[i]; r.sEl = $(".s", r.el); });
+
+  $("#jobs").innerHTML = CARDS.map((c) => `<div class="job"><span>${c.asset}</span><span class="bar"><i></i></span><span class="ok"></span></div>`).join("");
+  CARDS.forEach((c, i) => { c.jobEl = $("#jobs").children[i]; });
+
+  $("#slots").innerHTML = CARDS.map((c, i) => `
+    <div class="slot" style="left:${SLOT_X[i]}px">
+      <div class="prompt"><b>KREA PROMPT · ${c.asset.toUpperCase()}</b>${esc(ev.prompts[c.key])}<div class="scan"></div></div>
+      <img class="raw" src="img/${ev.id}-krea-${c.asset}.jpg" alt="Krea image for the ${c.key} card">
+      <img class="card" src="img/${ev.id}-card-${c.key}.jpg" alt="Finished ${c.key} card">
+      <div class="edge"></div>
+      <div class="ftag"></div>
+    </div>`).join("");
+  CARDS.forEach((c, i) => {
+    const s = $("#slots").children[i];
+    c.slot = { prompt: $(".prompt", s), scan: $(".scan", s), raw: $(".raw", s), card: $(".card", s), edge: $(".edge", s), tag: $(".ftag", s) };
+  });
+
+  const calaV = ev.cala ? `${esc(ev.cala.name)}<small>${esc(ev.cala.desc)}</small>` : `null<small>no close match for “${esc(ev.calaQuery)}”</small>`;
+  kvs = [
+    ["event_id", esc(ev.id), "fda", 2.7],
+    ["product", `${esc(ev.product)}<small>from “${esc(ev.raw)}”</small>`, "fda", 3.2],
+    ["hazard", `<span class="hz">${esc(ev.hazard)}</span>`, "fda", 3.5],
+    ["class", esc(ev.cls), "fda", 3.7],
+    ["distribution", esc(ev.dist), "fda", 3.85],
+    ["quantity", esc(ev.qty), "fda", 4.0],
+    ["lots", esc(ev.lots), "fda", 4.15],
+    ["firm", esc(ev.firm), "fda", 4.3],
+    ["cala.entity", calaV, "cala", 7.4],
+  ];
+  $("#kvs").innerHTML = kvs.map(([k, v, s]) => `<div class="kv" data-svc="${s}"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("");
+  kvs.forEach((kv, i) => { kv.el = $("#kvs").children[i]; });
+
+  document.querySelectorAll("#seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
+  render(t);
+}
+
+/* ---------- render(t): everything is a pure function of time ---------- */
+const nodeEls = Object.fromEntries(Object.keys(NODES).map((k) => [k, $("#n-" + k)]));
+const pillEls = Object.fromEntries(["fda", "cala", "krea"].map((k) => [k, $(`.pill[data-svc="${k}"]`)]));
+const stateAt = (t, [a, b]) => (t < a ? "idle" : t < b ? "active" : "done");
+
+function render(t) {
+  $("#clock").textContent = `t+${t.toFixed(1)}s`;
+
+  for (const [k, span] of Object.entries(NODES)) nodeEls[k].dataset.state = stateAt(t, span);
+
+  const fs = $("[data-st]", nodeEls.fda);
+  fs.innerHTML = t < 1 ? "watching recalls" : t < 2.6 ? `GET event_id:${ev.id} ${dots(t)}` : `<em>1 event</em> → normalize`;
+  const cs = $("[data-st]", nodeEls.cala);
+  cs.innerHTML = t < 5 ? "waiting for firm name" : t < 7.2 ? `entities?name=${esc(ev.calaQuery)} ${dots(t)}` : ev.cala ? `<em>${esc(ev.cala.name)}</em>` : `<em>no company match</em><br>card uses FDA data only`;
+  const rs = $("[data-st]", nodeEls.render);
+  const shotsDone = CARDS.filter((c) => t >= c.shot + SHOT).length;
+  rs.innerHTML = t < 15.4 ? "waiting for 4 images" : t < 15.9 ? `launching Chrome ${dots(t)}` : shotsDone < 4 ? `card ${Math.min(4, shotsDone + 1)} of 4 ${dots(t)}` : `<em>4 PNGs saved</em>`;
+
+  CARDS.forEach((c) => {
+    const bar = $(".bar", c.jobEl), fill = $("i", bar), ok = $(".ok", c.jobEl);
+    if (t < KREA_START + 0.5) { bar.className = "bar"; fill.style.width = "0"; fill.style.left = "0"; ok.textContent = ""; }
+    else if (t < c.job) { bar.className = "bar wait"; const x = (t * 0.9) % 1; fill.style.left = `${x * 100 - 34}%`; fill.style.width = ""; ok.textContent = ""; }
+    else { bar.className = "bar"; fill.style.left = "0"; fill.style.width = "100%"; ok.textContent = "✓"; }
+  });
+
+  // network rows
+  rows.forEach((r) => {
+    const vis = t >= r.s;
+    r.el.style.visibility = vis ? "visible" : "hidden";
+    if (!vis) return;
+    const done = t >= r.e;
+    r.el.classList.toggle("ok", done);
+    r.el.classList.toggle("live", !done);
+    r.sEl.textContent = done ? r.ok(t) : r.live ? r.live(t) : `pending ${dots(t)}`;
+  });
+  for (const k of ["fda", "cala", "krea"]) {
+    const live = rows.some((r) => r.svc === k && t >= r.s && t < r.e);
+    const any = rows.some((r) => r.svc === k && t >= r.s);
+    pillEls[k].dataset.state = live ? "active" : any ? "done" : "idle";
+    const n = rows.filter((r) => r.svc === k && (k !== "krea" || r.m === "POST") && t >= r.s).length;
+    $("[data-n]", pillEls[k]).textContent = k === "krea" ? `${n} job${n === 1 ? "" : "s"}` : `${n} call${n === 1 ? "" : "s"}`;
+  }
+
+  // wires + packets
+  for (const [id, w] of Object.entries(WIRES)) {
+    const [a, b] = WIRE_LIVE[id];
+    w.el.setAttribute("class", t >= a && t < b ? "wire on" : t >= b ? "wire done" : "wire");
+    if (t >= a && t < b) w.el.style.strokeDashoffset = String(-t * 40);
+  }
+  PACKETS.forEach(([w, a, b], i) => {
+    const el = pktEls[i];
+    if (t < a || t > b) { el.style.display = "none"; return; }
+    const pt = WIRES[w].el.getPointAtLength(WIRES[w].len * ease(prog(t, a, b)));
+    el.style.display = ""; el.setAttribute("cx", pt.x); el.setAttribute("cy", pt.y);
+  });
+
+  // output slots
+  CARDS.forEach((c, i) => {
+    const s = c.slot;
+    const gen = t >= KREA_START && t < c.job;
+    s.prompt.style.opacity = t < KREA_START ? 0.35 : t < c.job ? 1 : 0;
+    s.scan.style.display = gen ? "" : "none";
+    if (gen) s.scan.style.top = `${((t * 0.6 + i * 0.25) % 1) * 140 - 40}%`;
+    const r = prog(t, c.job, c.job + 0.9);
+    s.raw.style.opacity = t < c.job ? 0 : 1;
+    s.raw.style.filter = `blur(${(1 - ease(r)) * 16}px) saturate(${0.4 + 0.6 * r})`;
+    const w = prog(t, c.shot, c.shot + SHOT);
+    s.card.style.clipPath = `inset(0 0 ${(1 - ease(w)) * 100}% 0)`;
+    s.edge.style.opacity = w > 0 && w < 1 ? 1 : 0;
+    s.edge.style.top = `${ease(w) * 100}%`;
+    s.tag.className = "ftag" + (t >= c.job && w < 1 ? " k" : "");
+    s.tag.textContent = t < KREA_START ? `queued · ${c.file}` : t < c.job ? `Krea generating ${dots(t)}` : w < 1 ? `assets/${c.asset}.png · Krea, no text` : `${c.file} · 1080×1080`;
+  });
+
+  kvs.forEach((kv) => kv.el.classList.toggle("hide", t < kv[3]));
+
+  // chapter + caption
+  let ci = 0;
+  CHAPTERS.forEach((c, i) => { if (t >= c[0]) ci = i; });
+  if (ci !== render.ci || ev !== render.ev) {
+    render.ci = ci; render.ev = ev;
+    $("#chap").textContent = CHAPTERS[ci][1].toUpperCase();
+    $("#cap").textContent = CHAPTERS[ci][2];
+    $("#capm").textContent = `${CHAPTERS[ci][1]}: ${CHAPTERS[ci][2]}`;
+    document.querySelectorAll("#chaps button").forEach((b, i) => b.classList.toggle("cur", i === ci));
+  }
+  scrub.value = String(t);
+}
+
+/* ---------- transport ---------- */
+const scrub = $("#scrub"), playBtn = $("#play");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let t = reduce ? 21 : 0, playing = !reduce, last = null;
+
+function setPlaying(p) { playing = p; playBtn.textContent = p ? "Pause" : "Play"; last = null; }
+function frame(now) {
+  if (playing) {
+    if (last != null) {
+      t += Math.min(0.1, (now - last) / 1000);
+      if (t >= D) t = 0;
+      render(t);
+    }
+    last = now;
+  }
+  requestAnimationFrame(frame);
+}
+playBtn.addEventListener("click", () => setPlaying(!playing));
+$("#restart").addEventListener("click", () => { t = 0; render(t); setPlaying(true); });
+scrub.addEventListener("input", () => { t = parseFloat(scrub.value); render(t); });
+scrub.addEventListener("pointerdown", () => setPlaying(false));
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !/INPUT|BUTTON/.test(document.activeElement?.tagName ?? "")) { e.preventDefault(); setPlaying(!playing); }
+});
+
+$("#chaps").innerHTML = CHAPTERS.map(([s, n]) => `<button type="button" data-s="${s}">${n}</button>`).join("");
+$("#chaps").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  t = parseFloat(b.dataset.s); render(t);
+});
+
+$("#seg").innerHTML = Object.values(EVENTS).map((e) => `<button type="button" data-id="${e.id}" aria-pressed="false">${esc(e.product)}<small>${esc(e.pick)}</small></button>`).join("");
+$("#seg").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  t = 0; render.ci = -1; setEvent(b.dataset.id); setPlaying(true);
+});
+
+// scale the 1280×720 stage to the viewport width
+const vp = $("#vp"), stage = $("#stage");
+new ResizeObserver(() => { stage.style.transform = `scale(${vp.clientWidth / 1280})`; }).observe(vp);
+
+setEvent("99853");
+setPlaying(playing);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
