@@ -1,0 +1,119 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Recall Story Cards — "public safety bulletin": cool white paper, ink, signal red, caution yellow. */
+
+@theme inline {
+  --font-display: "Archivo Black", "Archivo", sans-serif;
+  --font-sans: "Public Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-caution: var(--caution);
+  --color-caution-foreground: var(--caution-foreground);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-map-surface: var(--map-surface);
+  --color-map-text: var(--map-text);
+  --color-map-muted: var(--map-muted);
+  --color-map-line: var(--map-line);
+  --color-map-empty: var(--map-empty);
+  --color-map-low: var(--map-low);
+  --color-map-medium: var(--map-medium);
+  --color-map-high: var(--map-high);
+  --shadow-stamp: 4px 4px 0 0 var(--ink);
+  --shadow-stamp-sm: 2px 2px 0 0 var(--ink);
+}
+
+:root {
+  --radius: 0.375rem;
+  --paper: oklch(0.985 0.004 250);
+  --ink: oklch(0.2 0.02 260);
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--ink);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--ink);
+  --primary: oklch(0.58 0.22 28);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.006 250);
+  --secondary-foreground: var(--ink);
+  --muted: oklch(0.95 0.008 250);
+  --muted-foreground: oklch(0.45 0.02 260);
+  --accent: oklch(0.94 0.01 250);
+  --accent-foreground: var(--ink);
+  --caution: oklch(0.86 0.17 90);
+  --caution-foreground: var(--ink);
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.2 0.02 260 / 14%);
+  --input: oklch(0.2 0.02 260 / 22%);
+  --ring: oklch(0.58 0.22 28);
+  --map-surface: #ffffff;
+  --map-text: #16202a;
+  --map-muted: #5d6d76;
+  --map-line: #8b9aa2;
+  --map-empty: #e3e8ea;
+  --map-low: #3fae9c;
+  --map-medium: #d9a41f;
+  --map-high: #e04a35;
+
+  /* Story card palette (read by the canvas renderer) */
+  --story-bg: oklch(0.2 0.02 260);
+  --story-fg: oklch(0.98 0.01 85);
+  --story-alert: oklch(0.6 0.23 28);
+  --story-caution: oklch(0.86 0.17 90);
+  --story-paper: oklch(0.97 0.015 85);
+  --story-muted: oklch(0.75 0.02 260);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: 0; }
+}
+
+.recall-map { background: var(--map-surface); color: var(--map-text); border: 1px solid var(--border); }
+.recall-map .map-control { background: var(--map-surface); color: var(--map-text); border: 1px solid var(--map-empty); }
+.recall-map .map-control:hover, .recall-map .map-state:hover { background: var(--map-empty); color: var(--map-text); }
+.recall-map .maplibregl-ctrl-attrib { background: var(--map-surface); color: var(--map-muted); }
+.recall-map .maplibregl-ctrl-attrib a { color: var(--map-muted); }
+
+@utility hazard-stripes {
+  background-image: repeating-linear-gradient(-45deg, var(--caution) 0 14px, var(--ink) 14px 28px);
+}
+
+@utility stamp {
+  border: 2px solid var(--ink);
+  box-shadow: var(--shadow-stamp);
+}
