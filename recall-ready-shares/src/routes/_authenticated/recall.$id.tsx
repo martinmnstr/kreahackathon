@@ -137,7 +137,7 @@ function Studio() {
         <div className="min-w-0">
           <p className="font-mono text-xs text-muted-foreground">{recall.source}{recall.recall_number ? ` · ${recall.recall_number}` : ""}{recall.classification ? ` · ${recall.classification}` : ""}</p>
           <h1 className="mt-1 max-w-3xl text-3xl leading-tight">{recall.title}</h1>
-          {recall.source_url && <a href={recall.source_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm underline">View official source <ExternalLink className="h-3 w-3" /></a>}
+          {recall.source_url && <a href={recall.source_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm underline">View source <ExternalLink className="h-3 w-3" /></a>}
         </div>
         <div className="max-w-sm rounded-lg border-2 border-ink bg-card px-4 py-3 text-sm">
           <p className="font-semibold">Lot numbers found</p>
