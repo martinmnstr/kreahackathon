@@ -36,13 +36,22 @@ async function askWindow(label, [a, b]) {
   return [];
 }
 
+// The dot-notation query from the Lovable prototype surfaces different products than the
+// questions above (e.g. lettuce, nut butter) but only returns name/description/contamination —
+// no company, date or states. Those come from the merge with other rows or from openFDA.
+async function askRetailerList(label) {
+  const { rows, errors } = await cala.query(`food_recalls.retailer=${label}.limit=50`);
+  if (errors.length) console.warn(`Cala refused the ${label} list query: ${errors[0]}`);
+  return rows.map(({ contamination, ...r }) => ({ ...r, reason: r.reason ?? contamination ?? null }));
+}
+
 /** @returns {Promise<import("./types.js").RecallEvent[]>} */
 export async function buildRecalls(retailer, { now = new Date() } = {}) {
   const { label } = RETAILERS[retailer];
   const from = new Date(now - WINDOW_DAYS * DAY);
 
   const [answers, fda] = await Promise.all([
-    Promise.all(calaWindows({ now }).map((w) => askWindow(label, w))),
+    Promise.all([...calaWindows({ now }).map((w) => askWindow(label, w)), askRetailerList(label)]),
     cached(`openfda-${WINDOW_DAYS}d`, RECALLS_TTL_MS, () => fetchFdaRecalls({ from, to: now })).then((e) => e.value),
   ]);
 
@@ -57,7 +66,8 @@ export async function buildRecalls(retailer, { now = new Date() } = {}) {
 
 // Same product shows up in several answers worded differently ("Great Value Frozen Organic
 // Triple Berry Blend (includes…)" vs "Great Value Organic Triple Berry Blend (Frozen)").
-// Same company + mostly the same words → one recall; keep the row with the most fields filled.
+// Same company + mostly the same words → one recall; keep the row with the most fields filled
+// and fill its gaps from the other (e.g. a list-query row gains a date from a question row).
 const NOISE = new Set(["frozen", "includes", "and", "with", "the", "for", "pack", "bottles", "product", "products"]);
 const words = (s) => new Set((s ?? "").toLowerCase().match(/[a-z]{3,}/g)?.filter((w) => !NOISE.has(w)) ?? []);
 const similar = (a, b) => {
@@ -74,8 +84,14 @@ function dedupe(rows) {
       const sameCo = !k.row.company || !r.company || companyKey(k.row.company) === companyKey(r.company);
       return sameCo && w.size && k.words.size && similar(w, k.words);
     });
-    if (i < 0) kept.push({ row: r, words: w });
-    else if (filled(r) > filled(kept[i].row)) kept[i] = { row: r, words: w };
+    if (i < 0) {
+      kept.push({ row: r, words: w });
+      continue;
+    }
+    const [main, extra] = filled(r) > filled(kept[i].row) ? [r, kept[i].row] : [kept[i].row, r];
+    const merged = { ...main };
+    for (const [k, v] of Object.entries(extra)) if (merged[k] == null || merged[k] === "") merged[k] = v;
+    kept[i] = { row: merged, words: main === r ? w : kept[i].words };
   }
   return kept.map((k) => k.row);
 }
@@ -106,19 +122,26 @@ function toEvent(row, retailer) {
   };
 }
 
-// Match by company name; among the firm's rows prefer ones whose product text mentions our brand/product words
+// Match by company name; among the firm's rows prefer ones whose product text mentions our brand/product words.
+// Rows without a company (list query) fall back to a strict product-text match.
 function fillFromFda(e, fda, now) {
-  const key = companyKey(e.company);
-  if (key.length < 4) return;
-  const candidates = fda.filter((r) => {
-    const k = companyKey(r.firm);
-    return k.length >= 4 && (k.includes(key) || key.includes(k));
-  });
-  if (!candidates.length) return;
-  const words = `${e.brand ?? ""} ${e.product}`.toLowerCase().match(/[a-z]{4,}/g) ?? [];
+  const words = [...new Set(`${e.brand ?? ""} ${e.product}`.toLowerCase().match(/[a-z]{4,}/g) ?? [])];
   const overlap = (r) => words.filter((w) => r.product.toLowerCase().includes(w)).length;
+  const key = companyKey(e.company);
+  const candidates =
+    key.length >= 4
+      ? fda.filter((r) => {
+          const k = companyKey(r.firm);
+          return k.length >= 4 && (k.includes(key) || key.includes(k));
+        })
+      : fda.filter((r) => overlap(r) >= 3 && overlap(r) / words.length >= 0.6);
+  if (!candidates.length) return;
   const match = candidates.reduce((a, b) => (overlap(b) > overlap(a) ? b : a));
 
+  if (!e.company) {
+    e.company = cleanName(match.firm);
+    e.sources.company = "openfda";
+  }
   e.fda = { recallNumber: match.recallNumber, eventId: match.eventId, firm: match.firm, url: match.url };
   e.classification = match.classification;
   e.sources.classification = "openfda";
