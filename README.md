@@ -1,6 +1,6 @@
 # Recall Radar 🚨
 
-FDA recall → Cala company context → LLM card text → Krea images → 4 social cards.
+FDA recall → Cala company context → Krea images → 4 social cards.
 
 ```bash
 cp .env.example .env   # add your keys
@@ -13,8 +13,7 @@ Needs Node 22+. No dependencies.
 |------|------|-----|
 | `fda.js` | latest recall from openFDA (works) | |
 | `cala.js` | company context | Cala team |
-| `llm.js` | 4 card texts + image prompts | |
 | `krea.js` | card images | Krea team |
-| `main.js` | glues it together | |
+| `main.js` | glues it together, defines the 4 cards (text + image prompts TODO) | |
 
 **Lovable:** build the UI in Lovable and use `output.json` as the data (paste it in as mock data for now).
