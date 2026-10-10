@@ -2,7 +2,10 @@
   "name": "recall-radar",
   "private": true,
   "type": "module",
+  "engines": { "node": ">=22" },
   "scripts": {
-    "start": "node --env-file-if-exists=.env main.js"
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "refresh": "node --env-file-if-exists=.env scripts/refresh.js",
+    "cala": "node --env-file-if-exists=.env scripts/cala.js"
   }
 }

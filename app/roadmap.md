@@ -1,3 +1,0 @@
-- [x] Walmart map with clustering
-- [x] Settings for Cala/Krea keys
-- [x] Verify Cala recall data with user's key
