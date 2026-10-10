@@ -2,10 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Film, ExternalLink, ImagePlus, Send } from "lucide-react";
+import { ArrowLeft, Check, Share2, Download, Film, ExternalLink, ImagePlus, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { US_STATES, targetedHeadline } from "@/lib/recall-parse";
-import { FORMAT_SIZE, downloadBlob, loadImage, renderCardPng, renderCardToCanvas, renderClip, type CardFormat, type CardRecall } from "@/lib/card-render";
+import { FORMAT_SIZE, downloadBlob, loadImage, renderCardPng, renderCardToCanvas, renderClip, type CardFormat, type CardRecall, type CardVariant, VARIANTS } from "@/lib/card-render";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,11 @@ function Studio() {
   const [name, setName] = useState("");
   const [clip, setClip] = useState<{ url: string; blob: Blob; ext: string } | null>(null);
   const [expandStates, setExpandStates] = useState(false);
+  const [active, setActive] = useState<CardVariant>("bulletin");
+  const [selected, setSelected] = useState<CardVariant[]>(["bulletin"]);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [busy, setBusy] = useState<CardVariant | null>(null);
+  const thumbRefs = useRef<Partial<Record<CardVariant, HTMLCanvasElement | null>>>({});
 
   useEffect(() => {
     setPhotoUrl(localStorage.getItem(PHOTO_KEY));
@@ -85,12 +90,18 @@ function Studio() {
   }, [recall, state, search.headline]);
 
   const presenter = style === "me" && photoImg ? { photo: photoImg, name: name.trim() } : null;
-  const input = recall ? { recall, format, headline, highlightState: state === "NONE" ? null : state, presenter, expandStates } : null;
+  const input = recall ? { recall, format, headline, highlightState: state === "NONE" ? null : state, presenter, expandStates, variant: active } : null;
 
   useEffect(() => {
     if (input && canvasRef.current) renderCardToCanvas(canvasRef.current, input);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recall, format, headline, state, style, photoImg, name, expandStates]);
+  }, [recall, format, headline, state, style, photoImg, name, expandStates, active]);
+  useEffect(() => {
+    if (!input) return;
+    for (const v of VARIANTS) { const c = thumbRefs.current[v.id]; if (c) renderCardToCanvas(c, { ...input, expandStates: false, variant: v.id }); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recall, format, headline, state, style, photoImg, name]);
+  const toggleSel = (v: CardVariant) => setSelected((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
 
   async function onPhoto(file: File | undefined) {
     if (!file) return;
@@ -109,11 +120,17 @@ function Studio() {
 
   const slug = recall ? `${recall.id.replace(/[^a-z0-9]+/gi, "-")}-${format}` : "card";
 
-  async function downloadPng() {
-    if (!input) return;
-    downloadBlob(await renderCardPng(input), `${slug}.png`);
-    await save("image");
-    toast.success("Card downloaded and saved to your library");
+  async function downloadOne(v: CardVariant) {
+    if (!input || !recall) return;
+    setBusy(v);
+    try {
+      const label = VARIANTS.find((x) => x.id === v)?.label ?? v;
+      downloadBlob(await renderCardPng({ ...input, expandStates: false, variant: v }), `${slug}-${v}.png`);
+      await save("image");
+      toast.success(`${label} card downloaded and saved to your library`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not make that card image");
+    } finally { setBusy(null); }
   }
 
   async function previewClip() {
@@ -151,6 +168,34 @@ function Studio() {
             className="stamp h-auto rounded"
             style={{ width: format === "tiktok" ? 360 : 440, aspectRatio: `${FORMAT_SIZE[format].w}/${FORMAT_SIZE[format].h}` }}
           />
+        </div>
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-semibold">Pick one or more versions ({selected.length} selected)</p>
+          <div className="grid grid-cols-3 gap-3">
+            {VARIANTS.map((v) => {
+              const on = selected.includes(v.id);
+              return (
+                <div key={v.id} className={`relative rounded-lg border-2 p-2 ${active === v.id ? "border-primary" : "border-ink"} bg-card`}>
+                  <button type="button" onClick={() => setActive(v.id)} className="block w-full" aria-label={`Preview ${v.label}`}>
+                    <canvas ref={(el) => { thumbRefs.current[v.id] = el; }} className="h-auto w-full rounded" style={{ aspectRatio: `${FORMAT_SIZE[format].w}/${FORMAT_SIZE[format].h}` }} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadOne(v.id)}
+                    disabled={busy === v.id}
+                    aria-label={`Download ${v.label} card`}
+                    title={`Download ${v.label} card`}
+                    className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded border-2 border-ink bg-card text-ink shadow-sm hover:bg-primary hover:text-primary-foreground disabled:opacity-60"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                  <button type="button" onClick={() => toggleSel(v.id)} aria-pressed={on} className={`mt-2 flex w-full items-center justify-center gap-1 rounded border-2 border-ink px-2 py-1 text-xs font-semibold ${on ? "bg-primary text-primary-foreground" : "bg-background"}`}>
+                    {on && <Check className="h-3 w-3" />}{v.label}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
         {recall.states.length > 4 && (
           <p className="mt-2 text-center font-mono text-xs text-muted-foreground">Hover the card to show all {recall.states.length} affected states</p>
@@ -205,7 +250,7 @@ function Studio() {
           <p className="mt-1 font-mono text-xs">{recall.lot_numbers.join(", ") || "None detected — card points to the source."}</p>
         </div>
         <div className="flex flex-col gap-2">
-          <Button onClick={downloadPng} className="stamp"><Download className="mr-2 h-4 w-4" />Download card (PNG)</Button>
+          <Button onClick={() => (selected.length ? setPublishOpen(true) : toast.error("Select at least one version"))} className="stamp"><Share2 className="mr-2 h-4 w-4" />Publish to social ({selected.length})</Button>
           <Button variant="outline" onClick={previewClip} disabled={clipProgress !== null}><Film className="mr-2 h-4 w-4" />{clipProgress !== null ? "Making clip…" : "Preview 7s clip"}</Button>
           {clipProgress !== null && <Progress value={clipProgress * 100} />}
         </div>
@@ -217,6 +262,17 @@ function Studio() {
           <div className="flex flex-col gap-2">
             <Button onClick={downloadClip} className="stamp"><Download className="mr-2 h-4 w-4" />Download clip</Button>
             <Button variant="outline" disabled><Send className="mr-2 h-4 w-4" />Post to TikTok or X — coming soon</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Publish {selected.length} card{selected.length > 1 ? "s" : ""}</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Choose where to post. Connect an account once and future cards post in one click.</p>
+          <div className="flex flex-col gap-2">
+            {["TikTok", "X (Twitter)", "Instagram"].map((p) => (
+              <Button key={p} variant="outline" onClick={() => toast.info(`${p} posting needs an account connection — setup coming next.`)}>Post to {p}</Button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>

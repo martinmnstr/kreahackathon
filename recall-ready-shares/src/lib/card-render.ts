@@ -67,7 +67,7 @@ function chip(ctx: CanvasRenderingContext2D, x: number, y: number, text: string,
 const ease = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3);
 
 export type Presenter = { photo: HTMLImageElement; name: string };
-export type RenderInput = { recall: CardRecall; format: CardFormat; headline: string; highlightState?: string | null; presenter?: Presenter | null; expandStates?: boolean };
+export type RenderInput = { recall: CardRecall; format: CardFormat; headline: string; highlightState?: string | null; presenter?: Presenter | null; expandStates?: boolean; variant?: CardVariant };
 
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((res, rej) => {
@@ -261,9 +261,22 @@ export function drawFrame(ctx: CanvasRenderingContext2D, input: RenderInput, art
   ctx.globalAlpha = 1;
 }
 
+export type CardVariant = "bulletin" | "paper" | "siren";
+export const VARIANTS: { id: CardVariant; label: string }[] = [
+  { id: "bulletin", label: "Bulletin (dark)" },
+  { id: "paper", label: "Paper (light)" },
+  { id: "siren", label: "Siren (red)" },
+];
+
+function variantPalette(p: Palette, v: CardVariant | undefined): Palette {
+  if (v === "paper") return { bg: p.paper, fg: p.bg, paper: p.bg, alert: p.alert, caution: p.alert, muted: p.muted };
+  if (v === "siren") return { bg: p.alert, fg: p.fg, paper: p.paper, alert: p.bg, caution: p.caution, muted: p.fg };
+  return p;
+}
+
 async function prepare(input: RenderInput) {
   await ensureFonts();
-  const p = palette();
+  const p = variantPalette(palette(), input.variant);
   const art = await loadHazardIllustration(input.recall.hazard, p.bg);
   const { w, h } = FORMAT_SIZE[input.format];
   return { p, art, w, h };
