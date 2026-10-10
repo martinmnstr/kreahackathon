@@ -1,3 +1,6 @@
 node_modules/
 .env
 output.json
+out/
+.DS_Store
+.playwright-mcp/
