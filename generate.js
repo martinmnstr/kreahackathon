@@ -3,7 +3,7 @@
 //   npm run list                         recent recall events
 //   npm run generate                     newest recall
 //   npm run generate -- --event 99853    a specific recall event
-//   flags: --name "Short Product Name"  --no-krea  --no-cala  --news (Cala news search, slow ~80s, cached)
+//   flags: --name "Short Product Name"  --no-images  --no-cala  --news (Cala news search, slow ~80s, cached)
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
@@ -17,7 +17,7 @@ const args = process.argv.slice(2);
 const flag = (f) => args.includes(f);
 const opt = (f) => (args.includes(f) ? args[args.indexOf(f) + 1] : undefined);
 
-// Which Krea image goes under which card.
+// Which generated image goes under which card.
 const CARD_IMAGE = { alert: 'alert', kitchen: 'product', steps: 'steps', statement: 'statement' };
 
 if (flag('--list')) {
@@ -36,7 +36,7 @@ console.log(`▶ ${recall.eventId} · ${recall.productName} · ${recall.hazard.l
 
 const [context, images] = await Promise.all([
   flag('--no-cala') ? null : companyContext(recall.firm, { news: flag('--news') }).catch((e) => warn('Cala', e)),
-  flag('--no-krea') ? {} : kreaImages(recall),
+  flag('--no-images') ? {} : cardImages(recall),
 ]);
 if (context) console.log(`  Cala: ${context.entity ? context.entity.name : 'no company match'}`);
 
@@ -55,7 +55,7 @@ await browser.close();
 const result = {
   recall,
   cala: context,
-  krea: Object.fromEntries(Object.entries(images).map(([k, v]) => [k, { prompt: v.prompt, url: v.url, file: v.file }])),
+  images: Object.fromEntries(Object.entries(images).map(([k, v]) => [k, { provider: v.provider, prompt: v.prompt, url: v.url, file: v.file }])),
   copy,
   cards: CARD_KEYS.map((key, i) => `${dir}/card${i + 1}-${key}.png`),
 };
@@ -63,14 +63,13 @@ await writeFile(`${dir}/recall.json`, JSON.stringify(result, null, 2));
 await writeFile(`${dir}/index.html`, preview(recall, CARD_KEYS.map((k, i) => `card${i + 1}-${k}.png`)));
 console.log(`✔ ${dir}/  (4 cards, recall.json, index.html)`);
 
-async function kreaImages(recall) {
-  if (!process.env.KREA_API_KEY) return warn('Krea', new Error('KREA_API_KEY missing')) ?? {};
+async function cardImages(recall) {
   const prompts = cardPrompts(recall);
   const entries = await Promise.all(Object.entries(prompts).map(async ([name, prompt]) => {
     try {
       const img = await generateImage(prompt, `${dir}/assets/${name}.png`);
       console.log(`  Krea: ${name} ✓`);
-      return [name, { ...img, prompt }];
+      return [name, { ...img, provider: 'krea', prompt }];
     } catch (e) {
       warn(`Krea ${name}`, e);
       return null;
