@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recall Radar Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0b0c0f; --panel:#14161b; --line:#262a33; --text:#f2f3f5; --mute:#8b919e; --red:#ff3b30; --accent:#ffd60a; }
+  * { box-sizing:border-box; margin:0; padding:0 }
+  body { background:var(--bg); color:var(--text); font:15px/1.45 Inter,system-ui,sans-serif; -webkit-font-smoothing:antialiased }
+  header { display:flex; align-items:center; gap:12px; padding:20px 32px; border-bottom:1px solid var(--line) }
+  header .dot { width:12px; height:12px; border-radius:50%; background:var(--red); box-shadow:0 0 0 4px rgba(255,59,48,.2) }
+  header h1 { font-size:18px; font-weight:800; letter-spacing:-.01em }
+  header span { color:var(--mute) }
+  main { display:grid; grid-template-columns: minmax(0,1fr) 400px; gap:28px; padding:28px 32px; max-width:1500px; margin:0 auto }
+  h2 { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--mute); margin:0 0 12px; display:flex; justify-content:space-between; align-items:baseline }
+  h2 small { text-transform:none; letter-spacing:0; font-weight:500 }
+  section + section { margin-top:28px }
+  .recalls { background:var(--panel); border:1px solid var(--line); border-radius:12px; max-height:340px; overflow:auto }
+  .recall { display:grid; grid-template-columns:28px minmax(0,1fr) auto; gap:12px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line); cursor:pointer }
+  .recall:last-child { border:0 }
+  .recall:hover { background:#1a1d23 }
+  .recall.on { background:#2a1f12 }
+  .recall .n { width:24px; height:24px; border-radius:6px; border:1.5px solid #3a404c; display:grid; place-items:center; font-size:12px; font-weight:800 }
+  .recall.on .n { background:var(--accent); border-color:var(--accent); color:#111 }
+  .recall b { display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .recall em { font-style:normal; color:var(--mute); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block }
+  .badge { font-size:11px; font-weight:800; padding:3px 8px; border-radius:20px; background:#2a2e37; color:#c8ccd4; white-space:nowrap }
+  .badge.c1 { background:rgba(255,59,48,.18); color:#ff6b61 }
+  .formats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px }
+  .fmt { background:var(--panel); border:1.5px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; text-align:left; color:inherit; font:inherit; transition:border-color .15s, transform .15s }
+  .fmt:hover { transform:translateY(-2px) }
+  .fmt.on { border-color:var(--accent) }
+  .fmt .thumb { aspect-ratio:4/5; background:#000; position:relative; display:grid; place-items:center; color:#3a404c; font-size:42px }
+  .fmt .thumb video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+  .fmt .body { padding:12px 14px 14px }
+  .fmt b { display:flex; justify-content:space-between; font-size:15px }
+  .fmt b small { font-size:11px; color:var(--mute); font-weight:600 }
+  .fmt p { color:var(--mute); font-size:12.5px; margin-top:4px }
+  .go { width:100%; margin-top:20px; padding:16px; border:0; border-radius:12px; background:var(--accent); color:#111; font:800 16px Inter,sans-serif; cursor:pointer }
+  .go:disabled { opacity:.35; cursor:not-allowed }
+  .hint { color:var(--mute); font-size:13px; margin-top:10px; min-height:20px }
+  aside { position:sticky; top:20px; align-self:start }
+  .phone { aspect-ratio:9/16; background:#000; border-radius:28px; border:8px solid #1d2027; overflow:hidden; position:relative; display:grid; place-items:center }
+  .phone video { width:100%; height:100%; object-fit:cover }
+  .empty { color:#4b515d; text-align:center; padding:30px; font-size:14px }
+  .log { position:absolute; inset:0; padding:22px; font:12.5px/1.6 ui-monospace,Menlo,monospace; color:#b8bec9; overflow:auto; background:#06070a }
+  .log div span { color:#5b6270; margin-right:8px }
+  .spin { display:inline-block; width:10px; height:10px; border:2px solid var(--accent); border-right-color:transparent; border-radius:50%; animation:s 1s linear infinite; margin-right:8px }
+  @keyframes s { to { transform:rotate(360deg) } }
+  .actions { display:flex; gap:10px; margin-top:14px }
+  .actions[hidden] { display:none }
+  .actions a { flex:1; text-align:center; padding:12px; border-radius:10px; background:var(--panel); border:1px solid var(--line); color:var(--text); text-decoration:none; font-weight:600 }
+  .gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px }
+  .gallery button { all:unset; cursor:pointer; background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden }
+  .gallery video { width:100%; aspect-ratio:9/16; object-fit:cover; display:block; background:#000 }
+  .gallery div { padding:8px 10px; font-size:12px; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+  .gallery div b { color:var(--text); display:block }
+  @media (max-width:1100px) { main { grid-template-columns:1fr } aside { position:static; max-width:380px } .formats { grid-template-columns:repeat(2,minmax(0,1fr)) } }
+</style>
+</head>
+<body>
+<header><div class="dot"></div><h1>Recall Radar Studio</h1><span>FDA recall → AI short video, in the format you pick</span></header>
+<main>
+  <div>
+    <section>
+      <h2>1 · Recalls <small id="selHint">Pick 1 (or up to 4 for roundup formats)</small></h2>
+      <div class="recalls" id="recalls"><div class="empty">Loading FDA enforcement reports…</div></div>
+    </section>
+    <section>
+      <h2>2 · Format</h2>
+      <div class="formats" id="formats"></div>
+      <button class="go" id="go" disabled>Generate video</button>
+      <div class="hint" id="hint"></div>
+    </section>
+    <section>
+      <h2>Rendered videos</h2>
+      <div class="gallery" id="gallery"></div>
+    </section>
+  </div>
+  <aside>
+    <div class="phone" id="phone"><div class="empty">Your video appears here.<br>Presenter formats take ~3 min (lip-synced AI presenter).</div></div>
+    <div class="actions" id="actions" hidden><a id="dl" download>Download MP4</a></div>
+  </aside>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]);
+let recalls = [], formats = [], videos = [], picked = [], format = null;
+
+async function load() {
+  [formats, videos] = await Promise.all([fetch('/api/formats').then((r) => r.json()), fetch('/api/videos').then((r) => r.json())]);
+  renderFormats(); renderGallery();
+  recalls = await fetch('/api/recalls').then((r) => r.json());
+  renderRecalls();
+}
+
+function renderRecalls() {
+  $('recalls').innerHTML = recalls.map((r) => {
+    const i = picked.indexOf(r.eventId);
+    return `<div class="recall ${i >= 0 ? 'on' : ''}" data-id="${r.eventId}">
+      <div class="n">${i >= 0 ? i + 1 : ''}</div>
+      <div><b>${esc(r.productName)}</b><em>${esc(r.firm)} · ${esc(r.hazard.label)} · ${esc(r.distribution.label)}</em></div>
+      <span class="badge ${r.classification === 'Class I' ? 'c1' : ''}">${esc(r.classification)}</span></div>`;
+  }).join('');
+  for (const el of document.querySelectorAll('.recall')) el.onclick = () => {
+    const id = el.dataset.id, i = picked.indexOf(id);
+    if (i >= 0) picked.splice(i, 1); else picked.push(id);
+    if (picked.length > 4) picked.shift();
+    renderRecalls(); update();
+  };
+}
+
+function renderFormats() {
+  $('formats').innerHTML = formats.map((f) => {
+    const sample = videos.find((v) => v.format === f.id);
+    return `<button class="fmt ${format === f.id ? 'on' : ''}" data-id="${f.id}">
+      <div class="thumb">${sample ? `<video src="${sample.video}#t=4" muted loop playsinline preload="metadata"></video>` : '▶'}</div>
+      <div class="body"><b>${esc(f.name)} <small>${f.multi ? '1–4 recalls' : '1 recall'}</small></b><p>${esc(f.tagline)}</p></div></button>`;
+  }).join('');
+  for (const el of document.querySelectorAll('.fmt')) {
+    const v = el.querySelector('video');
+    if (v) { el.onmouseenter = () => v.play(); el.onmouseleave = () => v.pause(); }
+    el.onclick = () => { format = el.dataset.id; renderFormats(); update(); };
+  }
+}
+
+function renderGallery() {
+  $('gallery').innerHTML = videos.map((v, i) => `<button data-i="${i}"><video src="${v.video}#t=3" muted preload="metadata"></video>
+    <div><b>${esc(formats.find((f) => f.id === v.format)?.name ?? v.format)}</b>${esc(v.recalls.map((r) => r.productName).join(', '))}</div></button>`).join('') || '<div class="empty">Nothing yet.</div>';
+  for (const el of document.querySelectorAll('.gallery button')) el.onclick = () => show(videos[el.dataset.i].video);
+}
+
+function update() {
+  const f = formats.find((x) => x.id === format);
+  $('go').disabled = !f || !picked.length;
+  $('hint').textContent = !f || !picked.length ? 'Pick at least one recall and a format.'
+    : !f.multi && picked.length > 1 ? `${f.name} covers one recall — it will use #1 (${recalls.find((r) => r.eventId === picked[0])?.productName}).`
+    : `${f.name} · ${f.multi ? picked.length : 1} recall${(f.multi ? picked.length : 1) > 1 ? 's' : ''}`;
+}
+
+$('go').onclick = async () => {
+  $('go').disabled = true;
+  $('actions').hidden = true;
+  const res = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ format, events: picked }) }).then((r) => r.json());
+  if (res.error) { $('hint').textContent = res.error; $('go').disabled = false; return; }
+  $('phone').innerHTML = '<div class="log" id="log"></div>';
+  const poll = async () => {
+    const job = await fetch(`/api/jobs/${res.id}`).then((r) => r.json());
+    $('log').innerHTML = job.log.map((l) => `<div><span>${l.t}s</span>${esc(l.m)}</div>`).join('') + (job.status === 'running' ? '<div><i class="spin"></i>working…</div>' : '');
+    $('log').scrollTop = 1e9;
+    if (job.status === 'running') return setTimeout(poll, 1500);
+    $('go').disabled = false;
+    if (job.status === 'done') {
+      show(job.video);
+      videos = await fetch('/api/videos').then((r) => r.json());
+      renderGallery(); renderFormats();
+    }
+  };
+  poll();
+};
+
+function show(src) {
+  $('phone').innerHTML = `<video src="${src}" controls autoplay playsinline></video>`;
+  $('dl').href = src;
+  $('actions').hidden = false;
+}
+
+load();
+</script>
+</body>
+</html>

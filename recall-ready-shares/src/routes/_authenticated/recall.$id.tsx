@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { VideoFormats } from "@/components/video-formats";
 
 type Search = { state?: string | undefined; format?: CardFormat | undefined; headline?: string | undefined };
 
@@ -195,6 +196,7 @@ function Studio() {
           <Button variant="outline" onClick={previewClip} disabled={clipProgress !== null}><Film className="mr-2 h-4 w-4" />{clipProgress !== null ? "Making clip…" : "Preview 7s clip"}</Button>
           {clipProgress !== null && <Progress value={clipProgress * 100} />}
         </div>
+        <VideoFormats recallNumber={recall.recall_number} slug={slug} />
       </aside>
       <Dialog open={!!clip} onOpenChange={(o) => !o && setClip(null)}>
         <DialogContent className="max-w-md">
