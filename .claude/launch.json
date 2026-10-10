@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "api", "runtimeExecutable": "npm", "runtimeArgs": ["start"], "port": 8787 },
+    { "name": "ui", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--prefix", "recall-ready-shares", "--", "--port", "8080"], "port": 8080 }
+  ]
+}

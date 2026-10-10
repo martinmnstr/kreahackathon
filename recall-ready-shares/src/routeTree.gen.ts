@@ -11,11 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedRecallIdRouteImport } from './routes/_authenticated/recall.$id'
-import { Route as ApiPublicHooksSyncRecallsRouteImport } from './routes/api/public/hooks/sync-recalls'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -26,19 +23,9 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedRecallIdRoute = AuthenticatedRecallIdRouteImport.update({
@@ -46,72 +33,40 @@ const AuthenticatedRecallIdRoute = AuthenticatedRecallIdRouteImport.update({
   path: '/recall/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const ApiPublicHooksSyncRecallsRoute =
-  ApiPublicHooksSyncRecallsRouteImport.update({
-    id: '/api/public/hooks/sync-recalls',
-    path: '/api/public/hooks/sync-recalls',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/library': typeof AuthenticatedLibraryRoute
   '/recall/$id': typeof AuthenticatedRecallIdRoute
-  '/api/public/hooks/sync-recalls': typeof ApiPublicHooksSyncRecallsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/library': typeof AuthenticatedLibraryRoute
   '/recall/$id': typeof AuthenticatedRecallIdRoute
-  '/api/public/hooks/sync-recalls': typeof ApiPublicHooksSyncRecallsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/recall/$id': typeof AuthenticatedRecallIdRoute
-  '/api/public/hooks/sync-recalls': typeof ApiPublicHooksSyncRecallsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/auth'
-    | '/dashboard'
-    | '/library'
-    | '/recall/$id'
-    | '/api/public/hooks/sync-recalls'
+  fullPaths: '/' | '/dashboard' | '/recall/$id'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/dashboard'
-    | '/library'
-    | '/recall/$id'
-    | '/api/public/hooks/sync-recalls'
+  to: '/' | '/dashboard' | '/recall/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/auth'
     | '/_authenticated/dashboard'
-    | '/_authenticated/library'
     | '/_authenticated/recall/$id'
-    | '/api/public/hooks/sync-recalls'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  AuthRoute: typeof AuthRoute
-  ApiPublicHooksSyncRecallsRoute: typeof ApiPublicHooksSyncRecallsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -130,25 +85,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/library': {
-      id: '/_authenticated/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/recall/$id': {
@@ -158,25 +99,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRecallIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/api/public/hooks/sync-recalls': {
-      id: '/api/public/hooks/sync-recalls'
-      path: '/api/public/hooks/sync-recalls'
-      fullPath: '/api/public/hooks/sync-recalls'
-      preLoaderRoute: typeof ApiPublicHooksSyncRecallsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedRecallIdRoute: typeof AuthenticatedRecallIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedRecallIdRoute: AuthenticatedRecallIdRoute,
 }
 
@@ -187,8 +119,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  AuthRoute: AuthRoute,
-  ApiPublicHooksSyncRecallsRoute: ApiPublicHooksSyncRecallsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

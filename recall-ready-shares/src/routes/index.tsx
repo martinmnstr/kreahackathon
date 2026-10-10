@@ -29,7 +29,7 @@ function Landing() {
       <div className="hazard-stripes h-3" />
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <span className="font-display text-xl">RECALL<span className="text-primary">/</span>CARDS</span>
-        <Button asChild variant="outline"><Link to="/auth">Sign in</Link></Button>
+        <Button asChild variant="outline"><Link to="/dashboard">Open recalls</Link></Button>
       </header>
       <main className="mx-auto max-w-6xl px-6 pb-24">
         <section className="grid items-center gap-12 py-12 md:grid-cols-[1.2fr_1fr]">
@@ -40,7 +40,7 @@ function Landing() {
               Plain-text recall notices don't get reposted. Turn any recall into a sourced story card or short clip in one click.
             </p>
             <div className="mt-8 flex gap-3">
-              <Button asChild size="lg" className="stamp"><Link to="/auth">Start making cards</Link></Button>
+              <Button asChild size="lg" className="stamp"><Link to="/dashboard">Start making cards</Link></Button>
             </div>
           </div>
           <div className="stamp mx-auto w-full max-w-sm rotate-2 rounded-lg bg-ink p-6 text-paper">

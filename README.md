@@ -9,6 +9,17 @@ npm run refresh        # build the snapshot (~1 min, Cala is slow on new questio
 npm start              # API on http://localhost:8787
 ```
 
+## UI
+
+`recall-ready-shares/` is the Lovable "Recall Story Cards" app (map, list, card studio). It reads
+from this API (no Supabase/auth). Start the API first, then:
+
+```bash
+cd recall-ready-shares && npm install && npm run dev -- --port 8080   # → http://localhost:8080/dashboard
+```
+
+Point it elsewhere with `VITE_API_URL`. The RecallEvent → UI row mapping is `recall-ready-shares/src/lib/api.ts`.
+
 ## API
 
 | Endpoint | Returns |

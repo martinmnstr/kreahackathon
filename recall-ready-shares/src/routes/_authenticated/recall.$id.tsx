@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Download, Film, ExternalLink } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchRecall } from "@/lib/api";
 import { US_STATES, targetedHeadline } from "@/lib/recall-parse";
-import { FORMAT_SIZE, downloadBlob, renderCardPng, renderCardToCanvas, renderClip, type CardFormat, type CardRecall } from "@/lib/card-render";
+import { FORMAT_SIZE, downloadBlob, renderCardPng, renderCardToCanvas, renderClip, type CardFormat } from "@/lib/card-render";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,14 +43,7 @@ function Studio() {
   const [headline, setHeadline] = useState(search.headline ?? "");
   const [clipProgress, setClipProgress] = useState<number | null>(null);
 
-  const { data: recall } = useQuery({
-    queryKey: ["recall", id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("recalls").select("*").eq("id", id).single();
-      if (error) throw error;
-      return data as CardRecall;
-    },
-  });
+  const { data: recall } = useQuery({ queryKey: ["recall", id], queryFn: () => fetchRecall(id) });
 
   useEffect(() => {
     if (recall && !search.headline) setHeadline(targetedHeadline(state === "NONE" ? null : state, recall.recall_date));
@@ -63,18 +56,12 @@ function Studio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recall, format, headline, state]);
 
-  async function save(kind: "image" | "clip") {
-    if (!recall) return;
-    await supabase.from("cards").insert({ recall_id: recall.id, format, kind, headline, target_state: state === "NONE" ? null : state });
-  }
-
   const slug = recall ? `${recall.id.replace(/[^a-z0-9]+/gi, "-")}-${format}` : "card";
 
   async function downloadPng() {
     if (!input) return;
     downloadBlob(await renderCardPng(input), `${slug}.png`);
-    await save("image");
-    toast.success("Card downloaded and saved to your library");
+    toast.success("Card downloaded");
   }
 
   async function downloadClip() {
@@ -83,8 +70,7 @@ function Studio() {
     try {
       const { blob, ext } = await renderClip(input, setClipProgress);
       downloadBlob(blob, `${slug}.${ext}`);
-      await save("clip");
-      toast.success("Clip downloaded and saved to your library");
+      toast.success("Clip downloaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Clip export failed");
     } finally { setClipProgress(null); }
@@ -107,9 +93,9 @@ function Studio() {
       </div>
       <aside className="space-y-5">
         <div>
-          <p className="font-mono text-xs text-muted-foreground">{recall.source} · {recall.id.split(":")[1]}</p>
+          <p className="font-mono text-xs text-muted-foreground">{recall.source}{recall.recall_number ? ` · ${recall.recall_number}` : ""}</p>
           <h1 className="mt-1 text-2xl leading-tight">{recall.title}</h1>
-          <a href={recall.source_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm underline">View official source <ExternalLink className="h-3 w-3" /></a>
+          {recall.source_url && <a href={recall.source_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm underline">View official source <ExternalLink className="h-3 w-3" /></a>}
         </div>
         <div className="space-y-2">
           <Label>Format</Label>

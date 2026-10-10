@@ -93,7 +93,7 @@ export function RecallMap({ recalls, state, onStateChange, loading }: Props) {
     <section className="recall-map mt-7 overflow-hidden rounded-lg" aria-label="FDA recall activity map">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-map-line/20 px-5 py-4">
         <div className="flex items-center gap-3"><MapPin className="h-5 w-5 text-map-low" /><h2 className="font-sans text-base font-bold">Recall activity</h2><span className="font-mono text-[10px] text-map-muted">UNITED STATES</span></div>
-        <span className="flex items-center gap-2 font-mono text-xs text-map-muted"><span className="h-2 w-2 rounded-full bg-map-low" />FDA ENFORCEMENT</span>
+        <span className="flex items-center gap-2 font-mono text-xs text-map-muted"><span className="h-2 w-2 rounded-full bg-map-low" />CALA + FDA</span>
       </div>
       <div className="grid lg:grid-cols-[minmax(0,1fr)_250px]">
         <div className="relative min-w-0">

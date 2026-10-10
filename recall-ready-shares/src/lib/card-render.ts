@@ -9,7 +9,7 @@ export const FORMAT_SIZE: Record<CardFormat, { w: number; h: number; label: stri
 };
 
 export type CardRecall = {
-  id: string; source: string; title: string; product: string; firm: string; reason: string;
+  id: string; source: string; recall_number?: string | null; title: string; product: string; firm: string; reason: string;
   hazard: string; classification: string | null; states: string[]; nationwide: boolean;
   lot_numbers: string[]; recall_date: string; source_url: string;
 };
@@ -206,8 +206,8 @@ export function drawFrame(ctx: CanvasRenderingContext2D, input: RenderInput, art
   ctx.fillRect(0, fy, w, h - fy);
   ctx.fillStyle = p.bg;
   ctx.font = '700 30px "Public Sans"';
-  const recallNo = r.id.split(":")[1] ?? r.id;
-  ctx.fillText(`SOURCE: ${r.source} · Recall ${recallNo} · ${r.recall_date}`, pad, fy + 52);
+  const recallNo = r.recall_number ? ` · Recall ${r.recall_number}` : "";
+  ctx.fillText(`SOURCE: ${r.source}${recallNo} · ${r.recall_date}`, pad, fy + 52);
   ctx.font = '500 26px "Public Sans"';
   ctx.fillText(wrap(ctx, `${r.firm}. Stop using the product and check the official notice.`, w - pad * 2, 1)[0] ?? "", pad, fy + 92);
   ctx.globalAlpha = 1;

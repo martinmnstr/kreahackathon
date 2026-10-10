@@ -1,16 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { syncRecallsNow } from "@/lib/recalls.functions";
+import { fetchRecalls } from "@/lib/api";
 import { HAZARD_LABELS, US_STATES, type Hazard } from "@/lib/recall-parse";
 import { hazardIcon } from "@/lib/illustrations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecallMap } from "@/components/recall-map";
 import { recallsForState } from "@/lib/recall-geography";
 
@@ -30,41 +29,28 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const qc = useQueryClient();
-  const sync = useServerFn(syncRecallsNow);
   const [state, setState] = useState<string>("ALL");
-  const [range, setRange] = useState("7");
+  const [range, setRange] = useState("90");
   const [q, setQ] = useState("");
   const [syncing, setSyncing] = useState(false);
 
-  const { data: recalls, isLoading } = useQuery({
-    queryKey: ["recalls", range],
-    queryFn: async () => {
-      const since = new Date(Date.now() - Number(range) * 86_400_000).toISOString().slice(0, 10);
-      const query = supabase.from("recalls").select("*").gte("recall_date", since).order("recall_date", { ascending: false }).limit(200);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: all, isLoading, error } = useQuery({ queryKey: ["recalls"], queryFn: () => fetchRecalls() });
+  const since = new Date(Date.now() - Number(range) * 86_400_000).toISOString().slice(0, 10);
+  const recalls = (all ?? []).filter((r) => r.recall_date >= since);
 
+  // Forces a rebuild in the data service (Cala + openFDA, ~1 min).
   async function refresh() {
     setSyncing(true);
     try {
-      const r = await sync();
-      toast.success(`Checked ${r.fetched} recalls from FDA`);
-      qc.invalidateQueries({ queryKey: ["recalls"] });
+      const fresh = await fetchRecalls({ refresh: true });
+      qc.setQueryData(["recalls"], fresh);
+      toast.success(`Loaded ${fresh.length} recalls`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Refresh failed");
     } finally { setSyncing(false); }
   }
 
-  // First visit with an empty feed: pull data once.
-  useEffect(() => {
-    supabase.from("recalls").select("id", { count: "exact", head: true }).then(({ count }) => { if (count === 0) refresh(); });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const searched = (recalls ?? []).filter((r) => !q || `${r.title} ${r.firm} ${r.reason}`.toLowerCase().includes(q.toLowerCase()));
+  const searched = recalls.filter((r) => !q || `${r.title} ${r.firm} ${r.reason}`.toLowerCase().includes(q.toLowerCase()));
   const filtered = recallsForState(searched, state);
   const headline = state === "ALL" ? "All recalls" : `New in ${US_STATES[state]} ${range === "7" ? "this week" : range === "30" ? "this month" : ""}`;
 
@@ -72,7 +58,7 @@ function Dashboard() {
     <main className="mx-auto max-w-7xl px-6 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-xs text-muted-foreground">LIVE FEED · FDA</p>
+          <p className="font-mono text-xs text-muted-foreground">WALMART · CALA + FDA</p>
           <h1 className="text-4xl">{headline}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -98,7 +84,7 @@ function Dashboard() {
 
       <RecallMap recalls={searched} state={state} onStateChange={setState} loading={isLoading} />
       <div className="mt-7 flex items-center justify-between gap-3"><h2 className="font-sans text-lg font-bold">{state === "ALL" ? "Latest recalls" : `${US_STATES[state]} recalls`}</h2><span className="font-mono text-xs text-muted-foreground">{filtered.length} RESULTS</span></div>
-      {isLoading ? <p className="mt-10 font-mono text-sm">Loading recalls…</p> : filtered.length === 0 ? (
+      {error ? <p className="mt-10 font-mono text-sm text-primary">Can't reach the data service — run `npm start` in the repo root. ({error.message})</p> : isLoading ? <p className="mt-10 font-mono text-sm">Loading recalls…</p> : filtered.length === 0 ? (
         <p className="mt-10 text-muted-foreground">No recalls match. Try a wider date range.</p>
       ) : (
         <ul className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -116,7 +102,7 @@ function Dashboard() {
                 </div>
                 <p className="mt-2 text-xs font-bold uppercase text-primary">{HAZARD_LABELS[r.hazard as Hazard]}</p>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{r.reason}</p>
-                <p className="mt-3 font-mono text-xs">{r.nationwide && r.states.length === 0 ? "NATIONWIDE" : r.states.join(" · ") || "States not listed"}</p>
+                <p className="mt-3 font-mono text-xs"><StateList recall={r} /></p>
                 <Button asChild className="mt-4 self-start" size="sm">
                   <Link to="/recall/$id" params={{ id: r.id }} search={{ state: state === "ALL" ? undefined : state }}>Make card</Link>
                 </Button>
@@ -126,5 +112,28 @@ function Dashboard() {
         </ul>
       )}
     </main>
+  );
+}
+
+const MAX_STATES = 4;
+
+// Shows up to four states; the rest collapse into "+N more" with the full list on hover.
+function StateList({ recall: r }: { recall: { nationwide: boolean; states: string[] } }) {
+  if (r.nationwide && r.states.length === 0) return <>NATIONWIDE</>;
+  if (r.states.length === 0) return <>States not listed</>;
+  if (r.states.length <= MAX_STATES) return <>{r.states.join(" · ")}</>;
+  const rest = r.states.length - MAX_STATES;
+  return (
+    <>
+      {r.states.slice(0, MAX_STATES).join(" · ")} ·{" "}
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span tabIndex={0} className="cursor-help underline decoration-dotted underline-offset-2">+{rest} more</span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs font-mono">{r.states.join(" · ")}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </>
   );
 }
