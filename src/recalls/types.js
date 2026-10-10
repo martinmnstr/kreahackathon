@@ -28,6 +28,8 @@
  * @property {string} recallNumber
  * @property {string} eventId
  * @property {string} firm
+ * @property {string} status       "Ongoing" | "Completed" | "Terminated"
+ * @property {string} reportDate   YYYY-MM-DD, when FDA published it (recallDate = when it started)
  * @property {string} url
  *
  * @typedef {object} CompanyProfile   from Cala entities

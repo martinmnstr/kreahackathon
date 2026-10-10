@@ -59,8 +59,14 @@ export async function buildRecalls(retailer, { now = new Date() } = {}) {
   for (const e of events) fillFromFda(e, fda, now);
   await attachCompanyProfiles(events);
 
+  // In the window = started, reported by FDA, or still ongoing within it. A recall that began in
+  // July but was reported in August and is still running matters to shoppers today.
+  const since = from.toISOString().slice(0, 10);
+  const inWindow = (e) =>
+    !e.recallDate || e.recallDate >= since || e.fda?.reportDate >= since || e.fda?.status === "Ongoing";
+
   return events
-    .filter((e) => !e.recallDate || e.recallDate >= from.toISOString().slice(0, 10))
+    .filter(inWindow)
     .sort((a, b) => (b.recallDate ?? "").localeCompare(a.recallDate ?? ""));
 }
 
@@ -142,7 +148,14 @@ function fillFromFda(e, fda, now) {
     e.company = cleanName(match.firm);
     e.sources.company = "openfda";
   }
-  e.fda = { recallNumber: match.recallNumber, eventId: match.eventId, firm: match.firm, url: match.url };
+  e.fda = {
+    recallNumber: match.recallNumber,
+    eventId: match.eventId,
+    firm: match.firm,
+    status: match.status,
+    reportDate: match.reportDate,
+    url: match.url,
+  };
   e.classification = match.classification;
   e.sources.classification = "openfda";
 
