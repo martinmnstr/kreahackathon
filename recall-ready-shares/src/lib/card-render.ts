@@ -49,23 +49,34 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number, maxLine
   return lines;
 }
 
-function chip(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, bg: string, fg: string, h = 64) {
-  ctx.font = '500 34px "JetBrains Mono"';
-  const w = ctx.measureText(text).width + 40;
+function chip(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, bg: string, fg: string, h = 64, font = '500 34px "JetBrains Mono"') {
+  ctx.font = font;
+  const padX = h * 0.35;
+  const w = ctx.measureText(text).width + padX * 2;
   ctx.fillStyle = bg;
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 10);
   ctx.fill();
   ctx.fillStyle = fg;
   ctx.textBaseline = "middle";
-  ctx.fillText(text, x + 20, y + h / 2 + 2);
+  ctx.fillText(text, x + padX, y + h / 2 + 2);
   ctx.textBaseline = "alphabetic";
   return w;
 }
 
 const ease = (t: number) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3);
 
-export type RenderInput = { recall: CardRecall; format: CardFormat; headline: string; highlightState?: string | null };
+export type Presenter = { photo: HTMLImageElement; name: string };
+export type RenderInput = { recall: CardRecall; format: CardFormat; headline: string; highlightState?: string | null; presenter?: Presenter | null; expandStates?: boolean };
+
+export function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = () => rej(new Error("Could not load photo"));
+    img.src = src;
+  });
+}
 
 /** Draw one frame. `t` is seconds into the clip; pass Infinity for the static card. */
 export function drawFrame(ctx: CanvasRenderingContext2D, input: RenderInput, art: HTMLImageElement, p: Palette, t: number) {
@@ -105,9 +116,28 @@ export function drawFrame(ctx: CanvasRenderingContext2D, input: RenderInput, art
   ctx.fill();
   ctx.fillStyle = p.fg;
   ctx.fillText("RECALL ALERT", pad + 22, y + 52);
+  const pr = input.presenter;
+  const prSize = 150;
   ctx.font = '700 40px "Public Sans"';
   ctx.fillStyle = p.caution;
-  ctx.fillText(input.headline.toUpperCase(), pad, y + 130);
+  ctx.fillText(wrap(ctx, input.headline.toUpperCase(), w - pad * 2 - (pr ? prSize + 30 : 0), 1)[0] ?? "", pad, y + 130);
+  if (pr) {
+    const cx = w - pad - prSize / 2;
+    const cy = y + prSize / 2 - 10;
+    ctx.save();
+    ctx.globalAlpha = a(0.15);
+    ctx.fillStyle = p.alert;
+    ctx.beginPath();
+    ctx.arc(cx, cy, prSize / 2 + 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, prSize / 2, 0, Math.PI * 2);
+    ctx.clip();
+    const im = pr.photo;
+    const s = Math.min(im.naturalWidth, im.naturalHeight);
+    ctx.drawImage(im, (im.naturalWidth - s) / 2, (im.naturalHeight - s) / 2, s, s, cx - prSize / 2, cy - prSize / 2, prSize, prSize);
+    ctx.restore();
+  }
   y += 180;
 
   const pulse = t === Infinity ? 1 : 1 + Math.sin(t * 4) * 0.03;
@@ -173,20 +203,37 @@ export function drawFrame(ctx: CanvasRenderingContext2D, input: RenderInput, art
   ctx.fillText("AFFECTED STATES", pad, y);
   y += 22;
   let x = pad;
-  const stateList = r.states.length ? r.states : [];
-  const shown = r.nationwide && stateList.length === 0 ? ["NATIONWIDE"] : stateList.slice(0, tall ? 18 : 12);
+  const stateList = r.states;
+  const total = stateList.length;
+  const expanded = !!input.expandStates;
+  const chipH = expanded ? 46 : 64;
+  const chipFont = expanded ? '500 24px "JetBrains Mono"' : '500 34px "JetBrains Mono"';
+  const rowH = expanded ? (tall ? 56 : 52) : 76;
+  const maxRows = expanded ? (tall ? 6 : 4) : (tall ? 3 : 2);
+  let shown: string[];
+  if (r.nationwide && total === 0) {
+    shown = ["NATIONWIDE"];
+  } else if (expanded) {
+    shown = stateList;
+  } else {
+    shown = stateList.slice(0, 4);
+    if (total > 4 && input.highlightState && !shown.includes(input.highlightState)) shown[3] = input.highlightState;
+  }
   let rows = 1;
+  let drawn = 0;
   for (const s of shown) {
-    ctx.font = '500 34px "JetBrains Mono"';
-    const cw = ctx.measureText(s).width + 40;
-    if (x + cw > w - pad) { x = pad; y += 76; rows++; if (rows > (tall ? 3 : 2)) break; }
+    ctx.font = chipFont;
+    const cw = ctx.measureText(s).width + chipH * 0.7;
+    if (x + cw > w - pad) { x = pad; y += rowH; rows++; if (rows > maxRows) break; }
     const hl = s === input.highlightState;
-    x += chip(ctx, x, y, s, hl ? p.alert : p.paper, hl ? p.fg : p.bg) + 12;
+    x += chip(ctx, x, y, s, hl ? p.alert : p.paper, hl ? p.fg : p.bg, chipH, chipFont) + 10;
+    drawn++;
   }
-  if (stateList.length > shown.length) {
-    chip(ctx, x, y, `+${stateList.length - shown.length}`, p.caution, p.bg);
+  const hidden = (r.nationwide && total === 0 ? 0 : total) - drawn;
+  if (hidden > 0) {
+    chip(ctx, x, y, `+${hidden} more`, p.caution, p.bg, chipH, chipFont);
   }
-  y += 110;
+  y += chipH + (expanded ? 34 : 46);
 
   // Lots
   ctx.globalAlpha = a(2.6);
@@ -209,7 +256,8 @@ export function drawFrame(ctx: CanvasRenderingContext2D, input: RenderInput, art
   const recallNo = r.id.split(":")[1] ?? r.id;
   ctx.fillText(`SOURCE: ${r.source} · Recall ${recallNo} · ${r.recall_date}`, pad, fy + 52);
   ctx.font = '500 26px "Public Sans"';
-  ctx.fillText(wrap(ctx, `${r.firm}. Stop using the product and check the official notice.`, w - pad * 2, 1)[0] ?? "", pad, fy + 92);
+  const tail = pr?.name ? `Shared by ${pr.name} · ` : "";
+  ctx.fillText(wrap(ctx, `${tail}${r.firm}. Stop using the product and check the official notice.`, w - pad * 2, 1)[0] ?? "", pad, fy + 92);
   ctx.globalAlpha = 1;
 }
 

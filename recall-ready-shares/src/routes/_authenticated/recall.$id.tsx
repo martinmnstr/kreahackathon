@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Download, Film, ExternalLink } from "lucide-react";
+import { ArrowLeft, Download, Film, ExternalLink, ImagePlus, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { US_STATES, targetedHeadline } from "@/lib/recall-parse";
-import { FORMAT_SIZE, downloadBlob, renderCardPng, renderCardToCanvas, renderClip, type CardFormat, type CardRecall } from "@/lib/card-render";
+import { FORMAT_SIZE, downloadBlob, loadImage, renderCardPng, renderCardToCanvas, renderClip, type CardFormat, type CardRecall } from "@/lib/card-render";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,18 @@ export const Route = createFileRoute("/_authenticated/recall/$id")({
   component: Studio,
 });
 
+const PHOTO_KEY = "rsc-presenter-photo";
+const NAME_KEY = "rsc-presenter-name";
+
+async function shrinkPhoto(file: File): Promise<string> {
+  const img = await loadImage(URL.createObjectURL(file));
+  const s = Math.min(img.naturalWidth, img.naturalHeight);
+  const c = document.createElement("canvas");
+  c.width = c.height = 320;
+  c.getContext("2d")!.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, 320, 320);
+  return c.toDataURL("image/jpeg", 0.85);
+}
+
 function Studio() {
   const { id } = Route.useParams();
   const search = Route.useSearch();
@@ -42,6 +55,21 @@ function Studio() {
   const [state, setState] = useState<string>(search.state ?? "NONE");
   const [headline, setHeadline] = useState(search.headline ?? "");
   const [clipProgress, setClipProgress] = useState<number | null>(null);
+  const [style, setStyle] = useState<"product" | "me">("product");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoImg, setPhotoImg] = useState<HTMLImageElement | null>(null);
+  const [name, setName] = useState("");
+  const [clip, setClip] = useState<{ url: string; blob: Blob; ext: string } | null>(null);
+  const [expandStates, setExpandStates] = useState(false);
+
+  useEffect(() => {
+    setPhotoUrl(localStorage.getItem(PHOTO_KEY));
+    setName(localStorage.getItem(NAME_KEY) ?? "");
+  }, []);
+  useEffect(() => {
+    if (!photoUrl) { setPhotoImg(null); return; }
+    loadImage(photoUrl).then(setPhotoImg).catch(() => setPhotoImg(null));
+  }, [photoUrl]);
 
   const { data: recall } = useQuery({
     queryKey: ["recall", id],
@@ -56,12 +84,23 @@ function Studio() {
     if (recall && !search.headline) setHeadline(targetedHeadline(state === "NONE" ? null : state, recall.recall_date));
   }, [recall, state, search.headline]);
 
-  const input = recall ? { recall, format, headline, highlightState: state === "NONE" ? null : state } : null;
+  const presenter = style === "me" && photoImg ? { photo: photoImg, name: name.trim() } : null;
+  const input = recall ? { recall, format, headline, highlightState: state === "NONE" ? null : state, presenter, expandStates } : null;
 
   useEffect(() => {
     if (input && canvasRef.current) renderCardToCanvas(canvasRef.current, input);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recall, format, headline, state]);
+  }, [recall, format, headline, state, style, photoImg, name, expandStates]);
+
+  async function onPhoto(file: File | undefined) {
+    if (!file) return;
+    try {
+      const url = await shrinkPhoto(file);
+      localStorage.setItem(PHOTO_KEY, url);
+      setPhotoUrl(url);
+      setStyle("me");
+    } catch { toast.error("Could not read that photo"); }
+  }
 
   async function save(kind: "image" | "clip") {
     if (!recall) return;
@@ -77,17 +116,24 @@ function Studio() {
     toast.success("Card downloaded and saved to your library");
   }
 
-  async function downloadClip() {
+  async function previewClip() {
     if (!input) return;
+    if (style === "me" && !photoImg) { toast.error("Upload your photo first"); return; }
     setClipProgress(0);
     try {
       const { blob, ext } = await renderClip(input, setClipProgress);
-      downloadBlob(blob, `${slug}.${ext}`);
-      await save("clip");
-      toast.success("Clip downloaded and saved to your library");
+      if (clip) URL.revokeObjectURL(clip.url);
+      setClip({ url: URL.createObjectURL(blob), blob, ext });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Clip export failed");
     } finally { setClipProgress(null); }
+  }
+
+  async function downloadClip() {
+    if (!clip) return;
+    downloadBlob(clip.blob, `${slug}.${clip.ext}`);
+    await save("clip");
+    toast.success("Clip downloaded and saved to your library");
   }
 
   if (!recall) return <p className="p-10 font-mono text-sm">Loading recall…</p>;
@@ -100,10 +146,15 @@ function Studio() {
         <div className="flex justify-center rounded-lg border-2 border-ink bg-muted p-6">
           <canvas
             ref={canvasRef}
+            onMouseEnter={() => setExpandStates(true)}
+            onMouseLeave={() => setExpandStates(false)}
             className="stamp h-auto rounded"
             style={{ width: format === "tiktok" ? 360 : 440, aspectRatio: `${FORMAT_SIZE[format].w}/${FORMAT_SIZE[format].h}` }}
           />
         </div>
+        {recall.states.length > 4 && (
+          <p className="mt-2 text-center font-mono text-xs text-muted-foreground">Hover the card to show all {recall.states.length} affected states</p>
+        )}
       </div>
       <aside className="space-y-5">
         <div>
@@ -132,16 +183,43 @@ function Studio() {
           <Label htmlFor="headline">Headline</Label>
           <Input id="headline" value={headline} maxLength={40} onChange={(e) => setHeadline(e.target.value)} />
         </div>
+        <div className="space-y-2">
+          <Label>Clip style</Label>
+          <ToggleGroup type="single" value={style} onValueChange={(v) => v && setStyle(v as "product" | "me")} className="justify-start">
+            <ToggleGroupItem value="product">Just the product</ToggleGroupItem>
+            <ToggleGroupItem value="me">Include me</ToggleGroupItem>
+          </ToggleGroup>
+          {style === "me" && (
+            <div className="space-y-2 rounded-lg border-2 border-ink bg-card p-3">
+              <div className="flex items-center gap-3">
+                {photoUrl ? <img src={photoUrl} alt="Your photo" className="h-14 w-14 rounded-full object-cover" /> : <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"><ImagePlus className="h-5 w-5" /></div>}
+                <Label htmlFor="photo" className="cursor-pointer text-sm underline">{photoUrl ? "Change photo" : "Upload your photo"}</Label>
+                <input id="photo" type="file" accept="image/*" className="hidden" onChange={(e) => onPhoto(e.target.files?.[0])} />
+              </div>
+              <Input placeholder="Your name or handle" value={name} maxLength={40} onChange={(e) => { setName(e.target.value); localStorage.setItem(NAME_KEY, e.target.value); }} />
+            </div>
+          )}
+        </div>
         <div className="rounded-lg border-2 border-ink bg-card p-4 text-sm">
           <p className="font-semibold">Lot numbers found</p>
           <p className="mt-1 font-mono text-xs">{recall.lot_numbers.join(", ") || "None detected — card points to the source."}</p>
         </div>
         <div className="flex flex-col gap-2">
           <Button onClick={downloadPng} className="stamp"><Download className="mr-2 h-4 w-4" />Download card (PNG)</Button>
-          <Button variant="outline" onClick={downloadClip} disabled={clipProgress !== null}><Film className="mr-2 h-4 w-4" />{clipProgress !== null ? "Recording clip…" : "Download 7s clip"}</Button>
+          <Button variant="outline" onClick={previewClip} disabled={clipProgress !== null}><Film className="mr-2 h-4 w-4" />{clipProgress !== null ? "Making clip…" : "Preview 7s clip"}</Button>
           {clipProgress !== null && <Progress value={clipProgress * 100} />}
         </div>
       </aside>
+      <Dialog open={!!clip} onOpenChange={(o) => !o && setClip(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Clip preview</DialogTitle></DialogHeader>
+          {clip && <video src={clip.url} controls autoPlay loop playsInline className="mx-auto max-h-[60vh] rounded border-2 border-ink" />}
+          <div className="flex flex-col gap-2">
+            <Button onClick={downloadClip} className="stamp"><Download className="mr-2 h-4 w-4" />Download clip</Button>
+            <Button variant="outline" disabled><Send className="mr-2 h-4 w-4" />Post to TikTok or X — coming soon</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
