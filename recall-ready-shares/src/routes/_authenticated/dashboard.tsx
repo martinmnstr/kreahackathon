@@ -52,7 +52,7 @@ function Dashboard() {
 
   const searched = recalls.filter((r) => !q || `${r.title} ${r.firm} ${r.reason}`.toLowerCase().includes(q.toLowerCase()));
   const filtered = recallsForState(searched, state);
-  const headline = state === "ALL" ? "All recalls" : `New in ${US_STATES[state]} ${range === "7" ? "this week" : range === "30" ? "this month" : ""}`;
+  const headline = state === "ALL" ? "All recalls" : `New in ${US_STATES[state]} ${range === "7" ? "this week" : range === "30" ? "this month" : "in the last 90 days"}`;
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
