@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecallMap } from "@/components/recall-map";
+import { useRecallRadarIndex } from "@/components/recall-radar-cards";
 import { recallsForState } from "@/lib/recall-geography";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -35,6 +36,7 @@ function Dashboard() {
   const [syncing, setSyncing] = useState(false);
 
   const { data: all, isLoading, error } = useQuery({ queryKey: ["recalls"], queryFn: () => fetchRecalls() });
+  const radar = useRecallRadarIndex().data ?? {};
   const since = new Date(Date.now() - Number(range) * 86_400_000).toISOString().slice(0, 10);
   const recalls = (all ?? []).filter((r) => r.recall_date >= since);
 
@@ -94,7 +96,10 @@ function Dashboard() {
               <li key={r.id} className="flex flex-col rounded-lg border-2 border-ink bg-card p-5 transition-shadow hover:shadow-stamp">
                 <div className="flex items-start justify-between gap-3">
                   <span className="rounded bg-ink px-2 py-0.5 font-mono text-xs text-paper">{r.source}{r.classification ? ` · ${r.classification}` : ""}</span>
-                  <span className="font-mono text-xs text-muted-foreground">{r.recall_date}</span>
+                  <span className="flex items-center gap-2">
+                    {r.recall_number && radar[r.recall_number] && <span className="rounded bg-caution px-2 py-0.5 font-mono text-xs">4 CARDS READY</span>}
+                    <span className="font-mono text-xs text-muted-foreground">{r.recall_date}</span>
+                  </span>
                 </div>
                 <div className="mt-3 flex gap-3">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-caution"><Icon className="h-6 w-6" /></span>
