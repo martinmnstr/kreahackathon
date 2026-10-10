@@ -17,9 +17,16 @@ let recent = { at: 0, list: [] };
 
 const routes = {
   'GET /': () => file(fileURLToPath(new URL('./studio/index.html', import.meta.url))),
-  'GET /api/formats': async () => {
+  // ?recall=<FDA recall number>: prefer a video already rendered for that recall as the format's sample.
+  'GET /api/formats': async (req) => {
+    const recall = new URL(req.url, 'http://x').searchParams.get('recall');
+    const eventId = recall ? await eventOf(recall).catch(() => null) : null;
     const videos = await gallery();
-    return json(Object.entries(FORMATS).map(([id, f]) => ({ id, name: f.name, tagline: f.tagline, inspired: f.inspired, multi: f.multi, sample: videos.find((v) => v.format === id)?.video ?? null })));
+    const sample = (id) => {
+      const own = eventId && videos.find((v) => v.format === id && v.recalls[0]?.eventId === eventId);
+      return own ? { sample: own.video, own: true } : { sample: videos.find((v) => v.format === id)?.video ?? null, own: false };
+    };
+    return json(Object.entries(FORMATS).map(([id, f]) => ({ id, name: f.name, tagline: f.tagline, inspired: f.inspired, multi: f.multi, ...sample(id) })));
   },
   'GET /api/recalls': async () => json(await recentList()),
   'GET /api/videos': async () => json(await gallery()),
@@ -30,7 +37,7 @@ const routes = {
     if (!FORMATS[format]) return json({ error: 'Unknown format' }, 400);
     const max = FORMATS[format].multi ? 4 : 1;
     const ids = [...events];
-    for (const n of recallNumbers) ids.push((await fetchByRecallNumber(n)).eventId);
+    for (const n of recallNumbers) ids.push(await eventOf(n));
     if (FORMATS[format].multi && withLatest) {
       const latest = (await recentList()).filter((r) => r.classification === 'Class I' && !ids.includes(r.eventId));
       ids.push(...latest.slice(0, withLatest).map((r) => r.eventId));
@@ -44,6 +51,12 @@ const routes = {
     return json({ id });
   },
 };
+
+const events = new Map(); // FDA recall number → openFDA event id
+async function eventOf(recallNumber) {
+  if (!events.has(recallNumber)) events.set(recallNumber, (await fetchByRecallNumber(recallNumber)).eventId);
+  return events.get(recallNumber);
+}
 
 async function recentList() {
   if (Date.now() - recent.at > 10 * 60_000) recent = { at: Date.now(), list: await fetchRecentEvents() };
@@ -74,7 +87,7 @@ async function gallery() {
   return items.filter(Boolean).sort((a, b) => b.created.localeCompare(a.created));
 }
 
-const brief = (r) => ({ eventId: r.eventId, productName: r.productName, firm: r.firm, hazard: r.hazard.label, classification: r.classification });
+const brief = (r) => ({ eventId: r.eventId, recallNumber: r.recallNumber, productName: r.productName, firm: r.firm, hazard: r.hazard.label, classification: r.classification });
 
 createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

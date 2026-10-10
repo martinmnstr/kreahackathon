@@ -1,0 +1,756 @@
+{
+  "H-1396-2026": {
+    "eventId": "99853",
+    "product": "Lemon Alfredo Fettuccine",
+    "firm": "Gias Food Inc.",
+    "hazard": "Listeria contamination",
+    "classification": "Class I",
+    "cards": [
+      "99853/card1-alert.png",
+      "99853/card2-kitchen.png",
+      "99853/card3-steps.png",
+      "99853/card4-statement.png"
+    ]
+  },
+  "H-1380-2026": {
+    "eventId": "99831",
+    "product": "Organic Triple Berry Blend",
+    "firm": "Frutas y Hortalizas del Sur S.A.",
+    "hazard": "E. coli contamination",
+    "classification": "Class I",
+    "cards": [
+      "99831/card1-alert.png",
+      "99831/card2-kitchen.png",
+      "99831/card3-steps.png",
+      "99831/card4-statement.png"
+    ]
+  },
+  "H-1271-2026": {
+    "eventId": "99690",
+    "product": "Marketside Tomato Bisque Soup Kit",
+    "firm": "Cuisine, Kettle",
+    "hazard": "Listeria contamination",
+    "classification": "Class II",
+    "cards": [
+      "99690/card1-alert.png",
+      "99690/card2-kitchen.png",
+      "99690/card3-steps.png",
+      "99690/card4-statement.png"
+    ]
+  },
+  "H-1265-2026": {
+    "eventId": "99716",
+    "product": "Outshine Fruit Bar Watermelon",
+    "firm": "Dreyer's Grand  Ice Cream Inc.",
+    "hazard": "May contain glass pieces",
+    "classification": "Class II",
+    "cards": [
+      "99716/card1-alert.png",
+      "99716/card2-kitchen.png",
+      "99716/card3-steps.png",
+      "99716/card4-statement.png"
+    ]
+  },
+  "H-1266-2026": {
+    "eventId": "99716",
+    "product": "Outshine Fruit Bar Watermelon",
+    "firm": "Dreyer's Grand  Ice Cream Inc.",
+    "hazard": "May contain glass pieces",
+    "classification": "Class II",
+    "cards": [
+      "99716/card1-alert.png",
+      "99716/card2-kitchen.png",
+      "99716/card3-steps.png",
+      "99716/card4-statement.png"
+    ]
+  },
+  "H-1264-2026": {
+    "eventId": "99716",
+    "product": "Outshine Fruit Bar Watermelon",
+    "firm": "Dreyer's Grand  Ice Cream Inc.",
+    "hazard": "May contain glass pieces",
+    "classification": "Class II",
+    "cards": [
+      "99716/card1-alert.png",
+      "99716/card2-kitchen.png",
+      "99716/card3-steps.png",
+      "99716/card4-statement.png"
+    ]
+  },
+  "H-1268-2026": {
+    "eventId": "99716",
+    "product": "Outshine Fruit Bar Watermelon",
+    "firm": "Dreyer's Grand  Ice Cream Inc.",
+    "hazard": "May contain glass pieces",
+    "classification": "Class II",
+    "cards": [
+      "99716/card1-alert.png",
+      "99716/card2-kitchen.png",
+      "99716/card3-steps.png",
+      "99716/card4-statement.png"
+    ]
+  },
+  "H-1269-2026": {
+    "eventId": "99716",
+    "product": "Outshine Fruit Bar Watermelon",
+    "firm": "Dreyer's Grand  Ice Cream Inc.",
+    "hazard": "May contain glass pieces",
+    "classification": "Class II",
+    "cards": [
+      "99716/card1-alert.png",
+      "99716/card2-kitchen.png",
+      "99716/card3-steps.png",
+      "99716/card4-statement.png"
+    ]
+  },
+  "H-1267-2026": {
+    "eventId": "99716",
+    "product": "Outshine Fruit Bar Watermelon",
+    "firm": "Dreyer's Grand  Ice Cream Inc.",
+    "hazard": "May contain glass pieces",
+    "classification": "Class II",
+    "cards": [
+      "99716/card1-alert.png",
+      "99716/card2-kitchen.png",
+      "99716/card3-steps.png",
+      "99716/card4-statement.png"
+    ]
+  },
+  "H-1395-2026": {
+    "eventId": "99874",
+    "product": "Cabricharme Cheese",
+    "firm": "WFM Purchasing, LP",
+    "hazard": "Undeclared egg allergen",
+    "classification": "Class I",
+    "cards": [
+      "99874/card1-alert.png",
+      "99874/card2-kitchen.png",
+      "99874/card3-steps.png",
+      "99874/card4-statement.png"
+    ]
+  },
+  "H-1364-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1355-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1354-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1351-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1349-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1356-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1348-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1368-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1362-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1357-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1358-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1363-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1360-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1365-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1366-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1352-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1350-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1347-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1346-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1361-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1359-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1344-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1367-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1345-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1353-2026": {
+    "eventId": "99611",
+    "product": "Tomato Salsa Fresca",
+    "firm": "Taylor Fresh Foods Inc",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99611/card1-alert.png",
+      "99611/card2-kitchen.png",
+      "99611/card3-steps.png",
+      "99611/card4-statement.png"
+    ]
+  },
+  "H-1388-2026": {
+    "eventId": "99841",
+    "product": "Mon Sire Brie",
+    "firm": "Optimus Inc. d/b/a/ Markys Caviar",
+    "hazard": "Listeria contamination",
+    "classification": "Class I",
+    "cards": [
+      "99841/card1-alert.png",
+      "99841/card2-kitchen.png",
+      "99841/card3-steps.png",
+      "99841/card4-statement.png"
+    ]
+  },
+  "H-1273-2026": {
+    "eventId": "99538",
+    "product": "Bettergoods Pistachio Nut Butter",
+    "firm": "Botticelli Foods, LLC",
+    "hazard": "Salmonella contamination",
+    "classification": "Class I",
+    "cards": [
+      "99538/card1-alert.png",
+      "99538/card2-kitchen.png",
+      "99538/card3-steps.png",
+      "99538/card4-statement.png"
+    ]
+  },
+  "H-1293-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1286-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1297-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1283-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1299-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1289-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1282-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1291-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1292-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1281-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1285-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1288-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1287-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1280-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1296-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1279-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1294-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1298-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1284-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1290-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  },
+  "H-1295-2026": {
+    "eventId": "99453",
+    "product": "Marketside Iceberg Salad",
+    "firm": "Taylor Farms de Mexico S. de R.L. de C.V.",
+    "hazard": "Potential Cyclospora contamination",
+    "classification": "Class I",
+    "cards": [
+      "99453/card1-alert.png",
+      "99453/card2-kitchen.png",
+      "99453/card3-steps.png",
+      "99453/card4-statement.png"
+    ]
+  }
+}
